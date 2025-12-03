@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CURSED APARTMENT - MOBILE VERSION</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+    /* RESET AND BASE */
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-touch-callout:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;touch-action:none;}
+    body,html{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Courier New',monospace;color:#fcc;}
+    
+    /* CANVAS - ALWAYS VISIBLE */
+    #gameCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;display:block;}
+    
+    /* SCREENS */
+    .screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:1000;padding:20px;}
+    #startScreen{display:flex;}
+    #modeScreen{display:none;}
+    #gameScreen{display:none;background:transparent;pointer-events:none;}
+    #winScreen{display:none;}
+    #gameoverScreen{display:none;}
+    
+    /* SCREEN CONTENT */
+    .screen h1{font-size:3rem;text-shadow:0 0 30px #c00;margin-bottom:30px;text-align:center;}
+    .btn{background:#800;color:#fcc;border:3px solid #c00;border-radius:20px;padding:15px 40px;font-size:1.5rem;margin:10px;cursor:pointer;box-shadow:0 0 20px #400;width:90%;max-width:300px;text-align:center;}
+    .btn:active{background:#c00;transform:scale(0.95);}
+    .mode-btn{background:#400;border-color:#600;font-size:1.4rem;padding:12px 30px;}
+    .easy{background:#040;border-color:#0a0;}
+    .normal{background:#440;border-color:#aa0;}
+    .hard{background:#840;border-color:#f80;}
+    .impossible{background:#400;border-color:#f00;}
+    
+    /* GAME VISUAL EFFECTS */
+    #torch{position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle 400px at var(--x,50%) var(--y,50%),rgba(100,80,40,0.6),transparent 70%);opacity:0;pointer-events:none;z-index:2;mix-blend-mode:screen;}
+    #blood{position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at center,rgba(200,0,0,0.7),transparent 15%);opacity:0;pointer-events:none;z-index:3;}
+    #hideText{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:50px;color:#600;text-shadow:0 0 30px #f00;opacity:0;z-index:999;letter-spacing:10px;}
+    #prompt{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(100,0,0,0.9);border:3px solid #c00;border-radius:15px;padding:15px 30px;font-size:20px;color:#fcc;z-index:999;display:none;text-align:center;max-width:90%;}
+    
+    /* MOBILE CONTROLS - ALWAYS ON TOP */
+    #controls{position:fixed;top:0;left:0;width:100%;height:100%;z-index:900;pointer-events:none;}
+    
+    /* HEALTH BAR - TOP */
+    #healthBar{position:absolute;top:10px;left:10px;right:10px;height:30px;background:rgba(20,0,0,0.8);border:2px solid #c00;border-radius:5px;overflow:hidden;}
+    #healthFill{height:100%;background:linear-gradient(90deg,#0f0,#ff0,#f00);width:100%;transition:width 0.3s;}
+    #healthText{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;justify-content:center;align-items:center;color:#fff;font-weight:bold;font-size:14px;text-shadow:1px 1px 2px #000;}
+    
+    /* JOYSTICK - LEFT BOTTOM */
+    #joystickArea{position:absolute;bottom:30px;left:30px;width:150px;height:150px;pointer-events:auto;z-index:901;}
+    #joystickBase{width:100%;height:100%;background:rgba(40,0,0,0.7);border:3px solid #600;border-radius:50%;}
+    #joystick{position:absolute;width:70px;height:70px;background:rgba(200,0,0,0.8);border:3px solid #c00;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 0 15px #400;}
+    
+    /* ACTION BUTTONS - RIGHT SIDE */
+    #actionButtons{position:absolute;bottom:30px;right:30px;display:flex;flex-direction:column;gap:15px;pointer-events:auto;z-index:901;}
+    .actionBtn{width:70px;height:70px;background:rgba(40,0,0,0.8);border:3px solid #c00;border-radius:50%;display:flex;justify-content:center;align-items:center;color:#fcc;font-size:20px;font-weight:bold;box-shadow:0 0 15px #400;}
+    .actionBtn:active{background:rgba(200,0,0,0.9);transform:scale(0.9);}
+    
+    /* SHOOT BUTTON */
+    #shootBtn{position:absolute;bottom:130px;right:30px;width:80px;height:80px;background:rgba(200,0,0,0.7);border:4px solid #c00;border-radius:50%;display:flex;justify-content:center;align-items:center;color:#fcc;font-size:24px;pointer-events:auto;z-index:901;box-shadow:0 0 20px #400;}
+    #shootBtn:active{background:rgba(255,50,50,0.9);transform:scale(0.9);}
+    
+    /* FLASHLIGHT TOGGLE */
+    #flashlightBtn{position:absolute;top:80px;right:20px;width:60px;height:60px;background:rgba(40,40,0,0.7);border:2px solid #cc0;border-radius:50%;display:flex;justify-content:center;align-items:center;color:#ff0;font-size:24px;pointer-events:auto;z-index:901;}
+    #flashlightBtn:active{background:rgba(80,80,0,0.9);transform:scale(0.9);}
+    
+    /* MODALS */
+    .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:10000;display:none;justify-content:center;align-items:center;padding:20px;}
+    .modal-content{background:#200;padding:25px;border-radius:15px;border:4px solid #c00;text-align:center;max-width:95%;width:400px;}
+    
+    /* RESPONSIVE */
+    @media (max-width: 480px){
+        .screen h1{font-size:2.2rem;}
+        .btn{font-size:1.2rem;padding:12px 25px;}
+        #joystickArea{width:120px;height:120px;bottom:20px;left:20px;}
+        #joystick{width:55px;height:55px;}
+        .actionBtn{width:55px;height:55px;font-size:16px;}
+        #shootBtn{width:65px;height:65px;bottom:110px;right:20px;}
+        #flashlightBtn{width:50px;height:50px;font-size:20px;}
+        #healthBar{height:25px;}
+    }
+</style>
+</head>
+<body>
+<!-- SCREENS -->
+<div id="startScreen" class="screen">
+    <h1>CURSED APARTMENT</h1>
+    <div style="font-size:1.2rem;text-align:center;margin:20px;background:rgba(40,0,0,0.7);padding:15px;border-radius:10px;border:2px solid #600;">
+        <div style="color:#0ff;font-weight:bold;margin-bottom:10px;">🎯 FIND 5 KEYS → ESCAPE 10F DOOR!</div>
+        <div style="margin:8px 0;"><span style="color:#0f0">JOYSTICK:</span> MOVE</div>
+        <div style="margin:8px 0;"><span style="color:#f80">🔫 BUTTON:</span> SHOOT</div>
+        <div style="margin:8px 0;"><span style="color:#ff0">E BUTTON:</span> HIDE/INTERACT</div>
+        <div style="margin:8px 0;"><span style="color:#0ff">SP BUTTON:</span> PUZZLE/EXIT</div>
+        <div><span style="color:#cc0">🔦 ICON:</span> FLASHLIGHT</div>
+    </div>
+    <button class="btn" id="startBtn">SELECT MODE</button>
+</div>
+
+<div id="modeScreen" class="screen">
+    <h1>SELECT DIFFICULTY</h1>
+    <button class="btn mode-btn easy" data-mode="easy">EASY</button>
+    <button class="btn mode-btn normal" data-mode="normal">NORMAL</button>
+    <button class="btn mode-btn hard" data-mode="hard">HARD</button>
+    <button class="btn mode-btn impossible" data-mode="impossible">IMPOSSIBLE</button>
+    <button class="btn" id="backBtn">BACK</button>
+</div>
+
+<div id="gameScreen" class="screen"></div>
+
+<div id="winScreen" class="screen">
+    <h1>YOU ESCAPED!</h1>
+    <p style="font-size:1.8rem;margin:20px;">Freedom...</p>
+    <button class="btn" onclick="location.reload()">PLAY AGAIN</button>
+</div>
+
+<div id="gameoverScreen" class="screen">
+    <h1>YOU DIED</h1>
+    <p style="font-size:1.8rem;margin:20px;">The darkness won...</p>
+    <button class="btn" onclick="location.reload()">TRY AGAIN</button>
+</div>
+
+<!-- CANVAS -->
+<canvas id="gameCanvas"></canvas>
+
+<!-- GAME EFFECTS -->
+<div id="torch"></div>
+<div id="blood"></div>
+<div id="hideText">HIDING...</div>
+<div id="prompt"></div>
+
+<!-- MOBILE CONTROLS -->
+<div id="controls">
+    <div id="healthBar">
+        <div id="healthFill"></div>
+        <div id="healthText">HP: 100 | KEYS: 0/5 | BULLETS: 10</div>
+    </div>
+    
+    <div id="joystickArea">
+        <div id="joystickBase"></div>
+        <div id="joystick"></div>
+    </div>
+    
+    <div id="shootBtn">🔫</div>
+    
+    <div id="actionButtons">
+        <div class="actionBtn" id="hideBtn">E</div>
+        <div class="actionBtn" id="interactBtn">SP</div>
+    </div>
+    
+    <div id="flashlightBtn">🔦</div>
+</div>
+
+<!-- MODALS -->
+<div id="puzzleModal" class="modal">
+    <div class="modal-content">
+        <h2 style="color:#f99;margin-bottom:20px;">SOLVE PUZZLE</h2>
+        <p id="puzzleQuestion" style="font-size:1.8rem;color:#0ff;margin:20px;"></p>
+        <input type="text" id="puzzleAnswer" style="width:100%;padding:12px;font-size:1.4rem;text-align:center;background:#111;color:#fff;border:2px solid #600;border-radius:8px;margin:15px 0;">
+        <div style="display:flex;gap:10px;margin-top:20px;">
+            <button id="submitPuzzle" class="btn" style="flex:1;">SUBMIT</button>
+            <button onclick="closePuzzle()" class="btn" style="background:#400;border-color:#600;">CANCEL</button>
+        </div>
+    </div>
+</div>
+
+<div id="liftModal" class="modal">
+    <div class="modal-content">
+        <h2 style="color:#0ff;margin-bottom:20px;">SELECT FLOOR</h2>
+        <div id="floorButtons" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:20px 0;"></div>
+        <button onclick="closeLift()" class="btn" style="width:100%;">CANCEL</button>
+    </div>
+</div>
+
+<!-- AUDIO -->
+<audio id="bgm" loop src="https://assets.codepen.io/605876/creepy-horror-ambience.mp3"></audio>
+<audio id="gunSound" src="https://assets.codepen.io/605876/gunshot.mp3"></audio>
+<audio id="hitSound" src="https://assets.codepen.io/605876/hit-marker.mp3"></audio>
+<audio id="scareSound" src="https://assets.codepen.io/605876/jumpscare-scream.mp3"></audio>
+
+<script>
+// ============================================
+// GAME VARIABLES
+// ============================================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let width = window.innerWidth;
+let height = window.innerHeight;
+canvas.width = width;
+canvas.height = height;
+
+let gameMode = 'easy';
+let player = {
+    x: width/2,
+    y: height/2,
+    hp: 100,
+    keys: 0,
+    bullets: 10,
+    vx: 0,
+    vy: 0,
+    speed: 3.5,
+    hidden: false
+};
+let floor = 1, torchOn = false, battery = 100;
+let ghosts = [], puzzle = null, stairsUp = null, stairsDown = null, elevator = null, exitDoor = null, hidingSpots = [];
+let bullets = [], batteryGiven = false;
+let gameRunning = false;
+let gameLoopId = null;
+
+// Joystick variables
+let joystickActive = false;
+let joystickX = 0;
+let joystickY = 0;
+let joystickStartX = 0;
+let joystickStartY = 0;
+const JOYSTICK_RADIUS = 60;
+
+// ============================================
+// SCREEN MANAGEMENT
+// ============================================
+function showScreen(screenId) {
+    // Hide all screens
+    ['startScreen','modeScreen','gameScreen','winScreen','gameoverScreen'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+    });
+    
+    // Show requested screen
+    document.getElementById(screenId).style.display = 'flex';
+    
+    // Handle game screen
+    if (screenId === 'gameScreen') {
+        // Show game elements
+        canvas.style.display = 'block';
+        document.getElementById('controls').style.display = 'block';
+        document.getElementById('torch').style.display = 'block';
+        document.getElementById('blood').style.display = 'block';
+        document.getElementById('hideText').style.display = 'block';
+        document.getElementById('prompt').style.display = 'block';
+        
+        // Start game
+        if (!gameRunning) {
+            startGame();
+        }
+    } else {
+        // Hide game elements
+        canvas.style.display = 'none';
+        document.getElementById('controls').style.display = 'none';
+        document.getElementById('torch').style.display = 'none';
+        document.getElementById('blood').style.display = 'none';
+        document.getElementById('hideText').style.display = 'none';
+        document.getElementById('prompt').style.display = 'none';
+        
+        // Stop game
+        if (gameRunning) {
+            gameRunning = false;
+            if (gameLoopId) cancelAnimationFrame(gameLoopId);
+            document.getElementById('bgm').pause();
+        }
+    }
+}
+
+// ============================================
+// GAME INITIALIZATION
+// ============================================
+document.getElementById('startBtn').onclick = () => showScreen('modeScreen');
+document.getElementById('backBtn').onclick = () => showScreen('startScreen');
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.onclick = function() {
+        gameMode = this.dataset.mode;
+        showScreen('gameScreen');
+    };
+});
+
+function startGame() {
+    console.log("Starting game in", gameMode, "mode");
+    
+    // Stop any existing game
+    if (gameLoopId) {
+        cancelAnimationFrame(gameLoopId);
+        gameLoopId = null;
+    }
+    
+    // Reset game state
+    gameRunning = true;
+    player = {
+        x: width/2,
+        y: height/2,
+        hp: 100,
+        keys: 0,
+        bullets: 10,
+        vx: 0,
+        vy: 0,
+        speed: 3.5,
+        hidden: false
+    };
+    floor = 1;
+    torchOn = false;
+    battery = 100;
+    ghosts = [];
+    puzzle = null;
+    stairsUp = null;
+    stairsDown = null;
+    elevator = null;
+    exitDoor = null;
+    hidingSpots = [];
+    bullets = [];
+    batteryGiven = false;
+    
+    // Update UI
+    updateUI();
+    
+    // Start audio
+    const bgm = document.getElementById('bgm');
+    bgm.volume = 0.5;
+    bgm.currentTime = 0;
+    bgm.play().catch(e => console.log("Audio error:", e));
+    
+    // Initialize first floor
+    initFloor(1);
+    
+    // Start game loop
+    gameLoop();
+}
+
+// ============================================
+// MOBILE CONTROLS - WORKING VERSION
+// ============================================
+// Joystick
+const joystickArea = document.getElementById('joystickArea');
+const joystick = document.getElementById('joystick');
+
+joystickArea.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    if (!gameRunning) return;
+    
+    joystickActive = true;
+    const touch = e.touches[0];
+    const rect = joystickArea.getBoundingClientRect();
+    joystickStartX = rect.left + rect.width/2;
+    joystickStartY = rect.top + rect.height/2;
+    
+    updateJoystick(touch.clientX, touch.clientY);
+    console.log("Joystick touched");
+});
+
+joystickArea.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    if (!joystickActive || !gameRunning) return;
+    
+    const touch = e.touches[0];
+    updateJoystick(touch.clientX, touch.clientY);
+});
+
+joystickArea.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    joystickActive = false;
+    joystickX = 0;
+    joystickY = 0;
+    joystick.style.transform = 'translate(-50%, -50%)';
+    console.log("Joystick released");
+});
+
+function updateJoystick(touchX, touchY) {
+    let dx = touchX - joystickStartX;
+    let dy = touchY - joystickStartY;
+    const distance = Math.sqrt(dx*dx + dy*dy);
+    
+    if (distance > JOYSTICK_RADIUS) {
+        dx = (dx/distance) * JOYSTICK_RADIUS;
+        dy = (dy/distance) * JOYSTICK_RADIUS;
+    }
+    
+    joystickX = dx;
+    joystickY = dy;
+    joystick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+}
+
+// Shoot Button
+document.getElementById('shootBtn').addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!gameRunning || player.bullets <= 0) return;
+    
+    console.log("Shooting!");
+    
+    player.bullets--;
+    updateUI();
+    
+    // Play gun sound
+    const gunSound = document.getElementById('gunSound');
+    gunSound.currentTime = 0;
+    gunSound.play().catch(e => console.log("Gun sound error"));
+    
+    // Create bullet
+    bullets.push({
+        x: player.x,
+        y: player.y,
+        tx: player.x + 300, // Shoot to the right
+        ty: player.y,
+        life: 40
+    });
+    
+    // Check hit
+    ghosts = ghosts.filter(g => {
+        if (Math.hypot(g.x - (player.x + 150), g.y - player.y) < 70) {
+            // Hit sound
+            document.getElementById('hitSound').currentTime = 0;
+            document.getElementById('hitSound').play().catch(e => console.log("Hit sound error"));
+            
+            // Blood effect
+            for (let i = 0; i < 8; i++) {
+                bullets.push({
+                    x: g.x,
+                    y: g.y,
+                    tx: g.x + (Math.random()-0.5)*200,
+                    ty: g.y + (Math.random()-0.5)*200,
+                    life: 20,
+                    blood: true
+                });
+            }
+            return false; // Remove ghost
+        }
+        return true;
+    });
+});
+
+// Hide Button
+document.getElementById('hideBtn').addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!gameRunning) return;
+    
+    console.log("Hide button pressed");
+    
+    // Toggle hide
+    player.hidden = !player.hidden;
+    document.getElementById('hideText').style.opacity = player.hidden ? 1 : 0;
+    setTimeout(() => {
+        document.getElementById('hideText').style.opacity = 0;
+    }, 1000);
+});
+
+// Interact Button
+document.getElementById('interactBtn').addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!gameRunning) return;
+    
+    console.log("Interact button pressed");
+    
+    // Check elevator
+    if (elevator && Math.hypot(elevator.x - player.x, elevator.y - player.y) < 120) {
+        openLift();
+        return;
+    }
+    
+    // Check puzzle
+    if (puzzle && !puzzle.solved && Math.hypot(puzzle.x - player.x, puzzle.y - player.y) < 100) {
+        openPuzzle();
+        return;
+    }
+    
+    // Check stairs
+    if (stairsDown && Math.hypot(stairsDown.x - player.x, stairsDown.y - player.y) < 90) {
+        changeFloor(stairsDown.to);
+        return;
+    }
+    
+    if (stairsUp && Math.hypot(stairsUp.x - player.x, stairsUp.y - player.y) < 90) {
+        changeFloor(stairsUp.to);
+        return;
+    }
+    
+    // Check exit
+    if (exitDoor && player.keys >= 5 && Math.hypot(exitDoor.x - player.x, exitDoor.y - player.y) < 130) {
+        winGame();
+        return;
+    }
+});
+
+// Flashlight Button
+document.getElementById('flashlightBtn').addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    torchOn = !torchOn;
+    const btn = document.getElementById('flashlightBtn');
+    btn.style.background = torchOn ? 'rgba(100,100,0,0.9)' : 'rgba(40,40,0,0.7)';
+    btn.style.borderColor = torchOn ? '#ff0' : '#cc0';
+    console.log("Flashlight:", torchOn ? "ON" : "OFF");
+});
+
+// ============================================
+// GAME LOGIC
+// ============================================
+function initFloor(f) {
+    floor = f;
+    ghosts = [];
+    puzzle = null;
+    stairsUp = null;
+    stairsDown = null;
+    elevator = null;
+    exitDoor = null;
+    hidingSpots = [];
+    bullets = [];
+    
+    // Ghost settings
+    let ghostCount = 4;
+    let ghostSpeed = 1.2;
+    let ghostDamage = 0.3;
+    
+    switch(gameMode) {
+        case 'easy': ghostCount = 3; ghostSpeed = 0.9; ghostDamage = 0.2; break;
+        case 'normal': ghostCount = 4; ghostSpeed = 1.2; ghostDamage = 0.3; break;
+        case 'hard': ghostCount = 5; ghostSpeed = 1.6; ghostDamage = 0.5; break;
+        case 'impossible': ghostCount = 6; ghostSpeed = 2.0; ghostDamage = 0.8; break;
+    }
+    
+    // Create ghosts
+    for (let i = 0; i < ghostCount; i++) {
+        ghosts.push({
+            x: 100 + Math.random()*(width-200),
+            y: 100 + Math.random()*(height-200),
+            speed: ghostSpeed + Math.random()*0.5,
+            damage: ghostDamage
+        });
+    }
+    
+    // Puzzle
+    puzzle = {
+        x: width/2,
+        y: height/2,
+        solved: false,
+        hasKey: player.keys < 5,
+        hasBattery: !batteryGiven,
+        hasAmmo: true,
+        hasHealth: true
+    };
+    
+    if (puzzle.hasBattery) batteryGiven = true;
+    
+    // Elevator and stairs
+    elevator = {x: width/2, y: height-140};
+    if (f > 1) stairsDown = {x: 90, y: height/2, to: f-1};
+    if (f < 10) stairsUp = {x: width-90, y: height/2, to: f+1};
+    if (f === 10) exitDoor = {x: width/2, y: 120};
+    
+    // Hiding spots
+    hidingSpots = [
+        {x: 90, y: 120},
+        {x: 90, y: height-120},
+        {x: width-90, y: 120},
+        {x: width-90, y: height-120}
+    ];
+    
+    updateUI();
+}
+
+function updateUI() {
+    // Update health
+    document.getElementById('healthFill').style.width = player.hp + '%';
+    document.getElementById('healthText').textContent = 
+        `HP: ${Math.floor(player.hp)} | KEYS: ${player.keys}/5 | BULLETS: ${player.bullets}`;
+}
+
+// ============================================
+// GAME LOOP
+// ============================================
+function gameLoop() {
+    if (!gameRunning) return;
+    
+    try {
+        // Clear canvas
+        ctx.fillStyle = '#0b0b0b';
+        ctx.fillRect(0, 0, width, height);
+        
+        // Draw walls
+        ctx.fillStyle = '#222';
+        ctx.fillRect(0, 0, width, 70);
+        ctx.fillRect(0, height-70, width, 70);
+        ctx.fillRect(0, 0, 70, height);
+        ctx.fillRect(width-70, 0, 70, height);
+        
+        // Player movement
+        if (joystickActive) {
+            const moveX = joystickX / JOYSTICK_RADIUS;
+            const moveY = joystickY / JOYSTICK_RADIUS;
+            player.vx = moveX * player.speed;
+            player.vy = moveY * player.speed;
+        } else {
+            player.vx *= 0.8;
+            player.vy *= 0.8;
+        }
+        
+        player.x += player.vx;
+        player.y += player.vy;
+        
+        // Keep player in bounds
+        player.x = Math.max(80, Math.min(width-80, player.x));
+        player.y = Math.max(80, Math.min(height-80, player.y));
+        
+        // Draw bullets
+        for (let i = bullets.length-1; i >= 0; i--) {
+            const b = bullets[i];
+            const dx = b.tx - b.x;
+            const dy = b.ty - b.y;
+            const dist = Math.hypot(dx, dy);
+            
+            if (dist < 25 || b.life-- <= 0) {
+                bullets.splice(i, 1);
+                continue;
+            }
+            
+            b.x += dx/dist * 30;
+            b.y += dy/dist * 30;
+            
+            ctx.strokeStyle = b.blood ? '#f00' : '#ff0';
+            ctx.lineWidth = b.blood ? 4 : 5;
+            ctx.beginPath();
+            ctx.moveTo(b.x, b.y);
+            ctx.lineTo(b.x + dx*0.3, b.y + dy*0.3);
+            ctx.stroke();
+        }
+        
+        // Torch effect
+        document.getElementById('torch').style.opacity = torchOn && battery > 0 ? 1 : 0;
+        if (torchOn && battery > 0) {
+            battery -= 0.06;
+            if (battery <= 0) {
+                torchOn = false;
+                battery = 0;
+            }
+        }
+        
+        // Draw player
+        ctx.fillStyle = player.hidden ? '#888' : '#fff';
+        ctx.fillRect(player.x-15, player.y-25, 30, 50);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(player.x-10, player.y-18, 20, 15);
+        ctx.fillStyle = player.hidden ? '#666' : '#f66';
+        ctx.fillRect(player.x-20, player.y+5, 15, 35);
+        ctx.fillRect(player.x+5, player.y+5, 15, 35);
+        
+        // Update and draw ghosts
+        for (const g of ghosts) {
+            if (!player.hidden) {
+                const dx = player.x - g.x;
+                const dy = player.y - g.y;
+                const dist = Math.hypot(dx, dy);
+                
+                if (dist > 40) {
+                    g.x += dx/dist * g.speed;
+                    g.y += dy/dist * g.speed;
+                }
+            }
+            
+            // Draw ghost
+            ctx.fillStyle = '#111';
+            ctx.beginPath();
+            ctx.arc(g.x, g.y, 40, 0, Math.PI*2);
+            ctx.fill();
+            
+            // Eyes
+            ctx.fillStyle = '#300';
+            ctx.beginPath();
+            ctx.arc(g.x-15, g.y-12, 10, 0, Math.PI*2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(g.x+15, g.y-12, 10, 0, Math.PI*2);
+            ctx.fill();
+            
+            // Pupils
+            ctx.fillStyle = '#f00';
+            ctx.beginPath();
+            ctx.arc(g.x-15, g.y-12, 5, 0, Math.PI*2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(g.x+15, g.y-12, 5, 0, Math.PI*2);
+            ctx.fill();
+            
+            // Damage player
+            if (Math.hypot(g.x-player.x, g.y-player.y) < 55 && !player.hidden) {
+                player.hp -= g.damage;
+                document.getElementById('blood').style.opacity = 1;
+                setTimeout(() => {
+                    document.getElementById('blood').style.opacity = 0;
+                }, 400);
+                
+                if (player.hp <= 0) {
+                    player.hp = 0;
+                    gameOver();
+                }
+                
+                updateUI();
+            }
+        }
+        
+        // Draw hiding spots
+        hidingSpots.forEach(s => {
+            ctx.fillStyle = player.hidden && Math.hypot(s.x-player.x, s.y-player.y) < 90 ? '#003300' : '#322';
+            ctx.fillRect(s.x-60, s.y-80, 120, 160);
+            ctx.fillStyle = '#544';
+            ctx.fillRect(s.x-48, s.y-68, 48, 136);
+            ctx.fillRect(s.x, s.y-68, 48, 136);
+            ctx.fillStyle = '#0f0';
+            ctx.font = '18px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText("HIDE", s.x, s.y);
+        });
+        
+        // Draw puzzle
+        if (puzzle) {
+            const color = puzzle.solved ? '#0f0' : '#ff0';
+            ctx.fillStyle = color;
+            ctx.fillRect(puzzle.x-60, puzzle.y-60, 120, 120);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(puzzle.x-45, puzzle.y-45, 90, 90);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 24px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText(puzzle.solved ? "SOLVED" : "REWARD", puzzle.x, puzzle.y+8);
+        }
+        
+        // Draw elevator
+        if (elevator) {
+            ctx.fillStyle = '#444';
+            ctx.fillRect(elevator.x-70, elevator.y-80, 140, 160);
+            ctx.fillStyle = '#0ff';
+            ctx.font = 'bold 26px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText("LIFT", elevator.x, elevator.y-25);
+        }
+        
+        // Draw stairs
+        if (stairsDown) {
+            ctx.fillStyle = '#555';
+            ctx.fillRect(stairsDown.x-50, stairsDown.y-70, 100, 140);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 32px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText("DN", stairsDown.x, stairsDown.y+10);
+        }
+        
+        if (stairsUp) {
+            ctx.fillStyle = '#555';
+            ctx.fillRect(stairsUp.x-50, stairsUp.y-70, 100, 140);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 32px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText("UP", stairsUp.x, stairsUp.y+10);
+        }
+        
+        // Draw exit door
+        if (exitDoor) {
+            if (player.keys >= 5) {
+                ctx.fillStyle = '#c00';
+                ctx.fillRect(exitDoor.x-100, exitDoor.y-150, 200, 300);
+                ctx.fillStyle = '#000';
+                ctx.fillRect(exitDoor.x-80, exitDoor.y-70, 160, 140);
+                
+                // Animated effect
+                for (let i = 0; i < 15; i++) {
+                    const a = Date.now()*0.005 + i*0.3;
+                    ctx.strokeStyle = '#f00';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(exitDoor.x, exitDoor.y, 60+i*10, a, a+2.2);
+                    ctx.stroke();
+                }
+                
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 36px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText("EXIT", exitDoor.x, exitDoor.y+20);
+            } else {
+                ctx.fillStyle = '#400';
+                ctx.fillRect(exitDoor.x-100, exitDoor.y-150, 200, 300);
+                ctx.fillStyle = '#822';
+                ctx.font = 'bold 28px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText("LOCKED", exitDoor.x, exitDoor.y+10);
+            }
+        }
+        
+        // Show prompts
+        const prompt = document.getElementById('prompt');
+        prompt.style.display = 'none';
+        
+        if (elevator && Math.hypot(elevator.x-player.x, elevator.y-player.y) < 110) {
+            prompt.textContent = "SP → LIFT";
+            prompt.style.display = 'block';
+        } else if (stairsDown && Math.hypot(stairsDown.x-player.x, stairsDown.y-player.y) < 85) {
+            prompt.textContent = "SP → DOWN";
+            prompt.style.display = 'block';
+        } else if (stairsUp && Math.hypot(stairsUp.x-player.x, stairsUp.y-player.y) < 85) {
+            prompt.textContent = "SP → UP";
+            prompt.style.display = 'block';
+        } else if (hidingSpots.some(s => Math.hypot(s.x-player.x, s.y-player.y) < 85)) {
+            prompt.textContent = "E → HIDE";
+            prompt.style.display = 'block';
+        } else if (puzzle && !puzzle.solved && Math.hypot(puzzle.x-player.x, puzzle.y-player.y) < 95) {
+            prompt.textContent = "SP → PUZZLE";
+            prompt.style.display = 'block';
+        } else if (exitDoor && player.keys >= 5 && Math.hypot(exitDoor.x-player.x, exitDoor.y-player.y) < 140) {
+            prompt.textContent = "SP → ESCAPE!";
+            prompt.style.display = 'block';
+        }
+        
+    } catch (e) {
+        console.error("Game loop error:", e);
+    }
+    
+    // Continue loop
+    if (gameRunning) {
+        gameLoopId = requestAnimationFrame(gameLoop);
+    }
+}
+
+// ============================================
+// MODAL FUNCTIONS
+// ============================================
+function openPuzzle() {
+    const questions = [
+        {q: "7×9=?", a: "63"},
+        {q: "8×8=?", a: "64"},
+        {q: "15-6=?", a: "9"},
+        {q: "25÷5=?", a: "5"},
+        {q: "12+18=?", a: "30"}
+    ];
+    
+    const q = questions[Math.floor(Math.random()*questions.length)];
+    document.getElementById('puzzleQuestion').textContent = q.q;
+    document.getElementById('puzzleAnswer').value = '';
+    document.getElementById('puzzleModal').style.display = 'flex';
+    window.currentAnswer = q.a;
+}
+
+function closePuzzle() {
+    document.getElementById('puzzleModal').style.display = 'none';
+}
+
+document.getElementById('submitPuzzle').onclick = () => {
+    const answer = document.getElementById('puzzleAnswer').value.trim();
+    
+    if (answer === window.currentAnswer) {
+        puzzle.solved = true;
+        closePuzzle();
+        
+        // Give rewards
+        if (puzzle.hasKey && player.keys < 5) {
+            player.keys++;
+            showAlert("🎉 KEY FOUND!");
+        }
+        
+        if (puzzle.hasBattery) {
+            battery = 100;
+            showAlert("🔋 BATTERY FULL!");
+        }
+        
+        if (puzzle.hasAmmo) {
+            player.bullets += 15;
+            showAlert("🔫 +15 BULLETS!");
+        }
+        
+        if (puzzle.hasHealth) {
+            player.hp = Math.min(100, player.hp + 50);
+            showAlert("❤️ +50 HEALTH!");
+        }
+        
+        updateUI();
+    } else {
+        showAlert("❌ WRONG ANSWER!");
+    }
+};
+
+function openLift() {
+    const container = document.getElementById('floorButtons');
+    container.innerHTML = '';
+    
+    for (let i = 1; i <= 10; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.textContent = i;
+        btn.style.background = i === floor ? '#c00' : '#800';
+        btn.onclick = () => {
+            closeLift();
+            if (i !== floor) changeFloor(i);
+        };
+        container.appendChild(btn);
+    }
+    
+    document.getElementById('liftModal').style.display = 'flex';
+}
+
+function closeLift() {
+    document.getElementById('liftModal').style.display = 'none';
+}
+
+function changeFloor(to) {
+    // Quick fade
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, width, height);
+    
+    setTimeout(() => {
+        initFloor(to);
+    }, 300);
+}
+
+function showAlert(msg) {
+    const alert = document.createElement('div');
+    alert.style.cssText = `
+        position: fixed;
+        top: 40%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(100,0,0,0.9);
+        color: #fcc;
+        padding: 15px 25px;
+        border-radius: 10px;
+        border: 3px solid #c00;
+        font-size: 1.3rem;
+        z-index: 100000;
+        text-align: center;
+        max-width: 80%;
+        box-shadow: 0 0 25px #800;
+    `;
+    alert.textContent = msg;
+    document.body.appendChild(alert);
+    setTimeout(() => alert.remove(), 1500);
+}
+
+function gameOver() {
+    gameRunning = false;
+    showScreen('gameoverScreen');
+    
+    // Play scare sound
+    const scare = document.getElementById('scareSound');
+    scare.currentTime = 0;
+    scare.play().catch(e => console.log("Scare sound error"));
+    
+    // Stop music
+    document.getElementById('bgm').pause();
+}
+
+function winGame() {
+    gameRunning = false;
+    showScreen('winScreen');
+    document.getElementById('bgm').pause();
+}
+
+// ============================================
+// INITIALIZATION
+// ============================================
+window.addEventListener('resize', () => {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    
+    if (player) {
+        player.x = Math.min(player.x, width-80);
+        player.y = Math.min(player.y, height-80);
+    }
+});
+
+// Prevent touch behaviors
+document.addEventListener('touchmove', function(e) {
+    if (e.target === canvas || 
+        e.target === joystickArea || 
+        e.target === joystick || 
+        e.target.closest('#controls')) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+// Start the game
+showScreen('startScreen');
+console.log("Game ready!");
+</script>
+</body>
+</html>
