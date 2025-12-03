@@ -2,80 +2,613 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CURSED APARTMENT - MOBILE VERSION</title>
+<title>CURSED APARTMENT - Mobile Horror Game</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
 <style>
     /* RESET AND BASE */
-    *{margin:0;padding:0;box-sizing:border-box;-webkit-touch-callout:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;touch-action:none;}
-    body,html{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Courier New',monospace;color:#fcc;}
+    * {
+        margin: 0; 
+        padding: 0; 
+        box-sizing: border-box; 
+        -webkit-touch-callout: none; 
+        -webkit-user-select: none; 
+        -moz-user-select: none; 
+        -ms-user-select: none; 
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+    }
     
-    /* CANVAS - ALWAYS VISIBLE */
-    #gameCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;display:block;}
+    body, html {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        font-family: 'Courier New', monospace;
+        color: #e8d8c0;
+        position: fixed;
+    }
     
-    /* SCREENS */
-    .screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:1000;padding:20px;}
-    #startScreen{display:flex;}
-    #modeScreen{display:none;}
-    #gameScreen{display:none;background:transparent;pointer-events:none;}
-    #winScreen{display:none;}
-    #gameoverScreen{display:none;}
+    /* CANVAS - FULLSCREEN */
+    #gameCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        display: block;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+    }
+    
+    /* SCREENS - ALWAYS FULLSCREEN */
+    .screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        padding: 20px;
+        overflow: hidden;
+    }
+    
+    #startScreen {
+        display: flex;
+        background: radial-gradient(ellipse at center, #111122 0%, #000000 100%);
+    }
+    
+    #modeScreen {
+        display: none;
+        background: linear-gradient(135deg, #0a0a1a 0%, #000000 100%);
+    }
+    
+    #gameScreen {
+        display: none;
+        background: transparent;
+        pointer-events: none;
+    }
+    
+    #winScreen, #gameoverScreen {
+        display: none;
+        background: radial-gradient(circle at center, rgba(20, 0, 20, 0.9), #000 70%);
+    }
     
     /* SCREEN CONTENT */
-    .screen h1{font-size:3rem;text-shadow:0 0 30px #c00;margin-bottom:30px;text-align:center;}
-    .btn{background:#800;color:#fcc;border:3px solid #c00;border-radius:20px;padding:15px 40px;font-size:1.5rem;margin:10px;cursor:pointer;box-shadow:0 0 20px #400;width:90%;max-width:300px;text-align:center;}
-    .btn:active{background:#c00;transform:scale(0.95);}
-    .mode-btn{background:#400;border-color:#600;font-size:1.4rem;padding:12px 30px;}
-    .easy{background:#040;border-color:#0a0;}
-    .normal{background:#440;border-color:#aa0;}
-    .hard{background:#840;border-color:#f80;}
-    .impossible{background:#400;border-color:#f00;}
+    .screen h1 {
+        font-size: 3.2rem;
+        text-shadow: 0 0 25px #ff0040, 0 0 8px #800020;
+        margin-bottom: 30px;
+        text-align: center;
+        letter-spacing: 3px;
+        color: #ffd0d0;
+        font-weight: normal;
+        background: linear-gradient(45deg, #ffd0d0, #ff8080);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        position: relative;
+    }
+    
+    .screen h1::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 200px;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #ff0040, transparent);
+    }
+    
+    .btn {
+        background: linear-gradient(145deg, #5a0000, #3a0000);
+        color: #ffd0d0;
+        border: 2px solid #a00000;
+        border-radius: 10px;
+        padding: 16px 30px;
+        font-size: 1.4rem;
+        margin: 12px;
+        cursor: pointer;
+        box-shadow: 0 5px 15px rgba(160, 0, 0, 0.4), 
+                    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        width: 90%;
+        max-width: 280px;
+        text-align: center;
+        font-family: 'Courier New', monospace;
+        letter-spacing: 1px;
+        transition: all 0.2s;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        transition: left 0.5s;
+    }
+    
+    .btn:active {
+        background: linear-gradient(145deg, #7a0000, #5a0000);
+        transform: translateY(2px);
+        box-shadow: 0 2px 8px rgba(160, 0, 0, 0.4);
+    }
+    
+    .btn:active::before {
+        left: 100%;
+    }
+    
+    .mode-btn {
+        background: linear-gradient(145deg, #003322, #002211);
+        border-color: #006644;
+        box-shadow: 0 5px 15px rgba(0, 100, 68, 0.4);
+    }
+    
+    .easy { 
+        background: linear-gradient(145deg, #003322, #002211);
+        border-color: #00aa66;
+    }
+    
+    .normal { 
+        background: linear-gradient(145deg, #333322, #222211);
+        border-color: #aaaa00;
+    }
+    
+    .hard { 
+        background: linear-gradient(145deg, #553322, #332211);
+        border-color: #ff6600;
+    }
+    
+    .impossible { 
+        background: linear-gradient(145deg, #550000, #330000);
+        border-color: #ff0000;
+    }
     
     /* GAME VISUAL EFFECTS */
-    #torch{position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle 400px at var(--x,50%) var(--y,50%),rgba(100,80,40,0.6),transparent 70%);opacity:0;pointer-events:none;z-index:2;mix-blend-mode:screen;}
-    #blood{position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at center,rgba(200,0,0,0.7),transparent 15%);opacity:0;pointer-events:none;z-index:3;}
-    #hideText{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:50px;color:#600;text-shadow:0 0 30px #f00;opacity:0;z-index:999;letter-spacing:10px;}
-    #prompt{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(100,0,0,0.9);border:3px solid #c00;border-radius:15px;padding:15px 30px;font-size:20px;color:#fcc;z-index:999;display:none;text-align:center;max-width:90%;}
+    #torch {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle 350px at var(--x,50%) var(--y,50%), 
+                    rgba(150, 120, 80, 0.4) 0%, 
+                    rgba(80, 60, 40, 0.2) 30%, 
+                    transparent 70%);
+        opacity: 0;
+        pointer-events: none;
+        z-index: 2;
+        mix-blend-mode: overlay;
+    }
     
-    /* MOBILE CONTROLS - ALWAYS ON TOP */
-    #controls{position:fixed;top:0;left:0;width:100%;height:100%;z-index:900;pointer-events:none;}
+    #vignette {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(ellipse at center, 
+                    transparent 40%, 
+                    rgba(0, 0, 0, 0.9) 80%);
+        pointer-events: none;
+        z-index: 4;
+    }
+    
+    #blood {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at var(--blood-x,50%) var(--blood-y,50%), 
+                    rgba(200, 0, 0, 0.8) 0%, 
+                    rgba(120, 0, 0, 0.4) 15%, 
+                    transparent 30%);
+        opacity: 0;
+        pointer-events: none;
+        z-index: 3;
+        mix-blend-mode: multiply;
+    }
+    
+    #hideText {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 42px;
+        color: #600;
+        text-shadow: 0 0 20px #f00, 0 0 5px #000;
+        opacity: 0;
+        z-index: 999;
+        letter-spacing: 8px;
+        font-weight: bold;
+        font-family: 'Courier New', monospace;
+    }
+    
+    #prompt {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(30, 0, 0, 0.85);
+        border: 2px solid #a00000;
+        border-radius: 8px;
+        padding: 12px 25px;
+        font-size: 18px;
+        color: #ffd0d0;
+        z-index: 999;
+        display: none;
+        text-align: center;
+        max-width: 90%;
+        backdrop-filter: blur(5px);
+        box-shadow: 0 0 20px rgba(160, 0, 0, 0.5);
+        font-family: 'Courier New', monospace;
+    }
+    
+    /* MOBILE CONTROLS - MINIMALIST */
+    #controls {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 900;
+        pointer-events: none;
+        touch-action: none;
+    }
     
     /* HEALTH BAR - TOP */
-    #healthBar{position:absolute;top:10px;left:10px;right:10px;height:30px;background:rgba(20,0,0,0.8);border:2px solid #c00;border-radius:5px;overflow:hidden;}
-    #healthFill{height:100%;background:linear-gradient(90deg,#0f0,#ff0,#f00);width:100%;transition:width 0.3s;}
-    #healthText{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;justify-content:center;align-items:center;color:#fff;font-weight:bold;font-size:14px;text-shadow:1px 1px 2px #000;}
+    #healthBar {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        right: 15px;
+        height: 24px;
+        background: rgba(10, 0, 0, 0.7);
+        border: 2px solid #a00000;
+        border-radius: 4px;
+        overflow: hidden;
+        backdrop-filter: blur(4px);
+    }
     
-    /* JOYSTICK - LEFT BOTTOM */
-    #joystickArea{position:absolute;bottom:30px;left:30px;width:150px;height:150px;pointer-events:auto;z-index:901;}
-    #joystickBase{width:100%;height:100%;background:rgba(40,0,0,0.7);border:3px solid #600;border-radius:50%;}
-    #joystick{position:absolute;width:70px;height:70px;background:rgba(200,0,0,0.8);border:3px solid #c00;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 0 15px #400;}
+    #healthFill {
+        height: 100%;
+        background: linear-gradient(90deg, 
+                    #00ff00 0%, 
+                    #aaff00 33%, 
+                    #ffff00 66%, 
+                    #ff0000 100%);
+        width: 100%;
+        transition: width 0.3s ease;
+    }
     
-    /* ACTION BUTTONS - RIGHT SIDE */
-    #actionButtons{position:absolute;bottom:30px;right:30px;display:flex;flex-direction:column;gap:15px;pointer-events:auto;z-index:901;}
-    .actionBtn{width:70px;height:70px;background:rgba(40,0,0,0.8);border:3px solid #c00;border-radius:50%;display:flex;justify-content:center;align-items:center;color:#fcc;font-size:20px;font-weight:bold;box-shadow:0 0 15px #400;}
-    .actionBtn:active{background:rgba(200,0,0,0.9);transform:scale(0.9);}
+    #healthText {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        font-weight: bold;
+        font-size: 12px;
+        text-shadow: 1px 1px 2px #000;
+        font-family: 'Courier New', monospace;
+        letter-spacing: 0.5px;
+    }
     
-    /* SHOOT BUTTON */
-    #shootBtn{position:absolute;bottom:130px;right:30px;width:80px;height:80px;background:rgba(200,0,0,0.7);border:4px solid #c00;border-radius:50%;display:flex;justify-content:center;align-items:center;color:#fcc;font-size:24px;pointer-events:auto;z-index:901;box-shadow:0 0 20px #400;}
-    #shootBtn:active{background:rgba(255,50,50,0.9);transform:scale(0.9);}
+    /* JOYSTICK - LEFT BOTTOM (SMALLER) */
+    #joystickArea {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        width: 120px;
+        height: 120px;
+        pointer-events: auto;
+        z-index: 901;
+    }
+    
+    #joystickBase {
+        width: 100%;
+        height: 100%;
+        background: rgba(20, 0, 0, 0.6);
+        border: 2px solid #600;
+        border-radius: 50%;
+        backdrop-filter: blur(5px);
+    }
+    
+    #joystick {
+        position: absolute;
+        width: 55px;
+        height: 55px;
+        background: rgba(180, 0, 0, 0.8);
+        border: 2px solid #c00;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 15px rgba(200, 0, 0, 0.5);
+    }
+    
+    /* ACTION BUTTONS - RIGHT SIDE (SMALLER) */
+    #actionButtons {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        pointer-events: auto;
+        z-index: 901;
+    }
+    
+    .actionBtn {
+        width: 60px;
+        height: 60px;
+        background: rgba(30, 0, 0, 0.7);
+        border: 2px solid #a00;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #ffd0d0;
+        font-size: 18px;
+        font-weight: bold;
+        box-shadow: 0 5px 15px rgba(160, 0, 0, 0.4);
+        backdrop-filter: blur(5px);
+        font-family: 'Courier New', monospace;
+    }
+    
+    .actionBtn:active {
+        background: rgba(200, 0, 0, 0.9);
+        transform: scale(0.9);
+    }
+    
+    /* SHOOT BUTTON (SMALLER) - BULLETS SHOOT AT TOUCH POSITION */
+    #shootBtn {
+        position: absolute;
+        bottom: 100px;
+        right: 20px;
+        width: 70px;
+        height: 70px;
+        background: rgba(180, 0, 0, 0.7);
+        border: 3px solid #c00;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #ffd0d0;
+        font-size: 22px;
+        pointer-events: auto;
+        z-index: 901;
+        box-shadow: 0 5px 20px rgba(200, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+    }
+    
+    #shootBtn:active {
+        background: rgba(255, 50, 50, 0.9);
+        transform: scale(0.9);
+    }
     
     /* FLASHLIGHT TOGGLE */
-    #flashlightBtn{position:absolute;top:80px;right:20px;width:60px;height:60px;background:rgba(40,40,0,0.7);border:2px solid #cc0;border-radius:50%;display:flex;justify-content:center;align-items:center;color:#ff0;font-size:24px;pointer-events:auto;z-index:901;}
-    #flashlightBtn:active{background:rgba(80,80,0,0.9);transform:scale(0.9);}
+    #flashlightBtn {
+        position: absolute;
+        top: 70px;
+        right: 15px;
+        width: 55px;
+        height: 55px;
+        background: rgba(40, 40, 0, 0.6);
+        border: 2px solid #cc0;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #ff0;
+        font-size: 22px;
+        pointer-events: auto;
+        z-index: 901;
+        box-shadow: 0 5px 15px rgba(204, 204, 0, 0.4);
+        backdrop-filter: blur(5px);
+    }
+    
+    #flashlightBtn:active {
+        background: rgba(80, 80, 0, 0.9);
+        transform: scale(0.9);
+    }
+    
+    /* FLOOR INDICATOR */
+    #floorIndicator {
+        position: absolute;
+        top: 50px;
+        left: 15px;
+        background: rgba(10, 0, 10, 0.7);
+        border: 2px solid #a000a0;
+        border-radius: 6px;
+        padding: 6px 12px;
+        color: #f0c0f0;
+        font-size: 14px;
+        font-weight: bold;
+        z-index: 902;
+        backdrop-filter: blur(4px);
+        font-family: 'Courier New', monospace;
+    }
+    
+    /* QUIT BUTTON - TOP RIGHT (APP EXIT) */
+    #quitBtn {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: 55px;
+        height: 55px;
+        background: rgba(40, 0, 0, 0.7);
+        border: 2px solid #c00;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #ffd0d0;
+        font-size: 22px;
+        pointer-events: auto;
+        z-index: 902;
+        box-shadow: 0 5px 15px rgba(200, 0, 0, 0.4);
+        backdrop-filter: blur(5px);
+    }
+    
+    #quitBtn:active {
+        background: rgba(200, 0, 0, 0.9);
+        transform: scale(0.9);
+    }
     
     /* MODALS */
-    .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:10000;display:none;justify-content:center;align-items:center;padding:20px;}
-    .modal-content{background:#200;padding:25px;border-radius:15px;border:4px solid #c00;text-align:center;max-width:95%;width:400px;}
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.92);
+        z-index: 10000;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        padding: 15px;
+    }
+    
+    .modal-content {
+        background: linear-gradient(145deg, #1a001a, #0a000a);
+        padding: 20px;
+        border-radius: 12px;
+        border: 3px solid #a000a0;
+        text-align: center;
+        max-width: 95%;
+        width: 380px;
+        box-shadow: 0 0 40px rgba(160, 0, 160, 0.6);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .modal-content::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #ff00ff, transparent);
+    }
     
     /* RESPONSIVE */
-    @media (max-width: 480px){
-        .screen h1{font-size:2.2rem;}
-        .btn{font-size:1.2rem;padding:12px 25px;}
-        #joystickArea{width:120px;height:120px;bottom:20px;left:20px;}
-        #joystick{width:55px;height:55px;}
-        .actionBtn{width:55px;height:55px;font-size:16px;}
-        #shootBtn{width:65px;height:65px;bottom:110px;right:20px;}
-        #flashlightBtn{width:50px;height:50px;font-size:20px;}
-        #healthBar{height:25px;}
+    @media (max-width: 480px) {
+        .screen h1 {
+            font-size: 2.4rem;
+        }
+        
+        .btn {
+            font-size: 1.1rem;
+            padding: 14px 20px;
+            max-width: 250px;
+        }
+        
+        #joystickArea {
+            width: 100px;
+            height: 100px;
+            bottom: 15px;
+            left: 15px;
+        }
+        
+        #joystick {
+            width: 45px;
+            height: 45px;
+        }
+        
+        .actionBtn {
+            width: 50px;
+            height: 50px;
+            font-size: 14px;
+        }
+        
+        #shootBtn {
+            width: 60px;
+            height: 60px;
+            bottom: 90px;
+            right: 15px;
+            font-size: 20px;
+        }
+        
+        #flashlightBtn {
+            width: 45px;
+            height: 45px;
+            font-size: 18px;
+            top: 60px;
+            right: 12px;
+        }
+        
+        #quitBtn {
+            width: 45px;
+            height: 45px;
+            font-size: 18px;
+            top: 12px;
+            right: 12px;
+        }
+        
+        #healthBar {
+            height: 20px;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+        }
+        
+        #healthText {
+            font-size: 10px;
+        }
+        
+        #floorIndicator {
+            top: 45px;
+            left: 12px;
+            font-size: 12px;
+            padding: 4px 8px;
+        }
+        
+        #hideText {
+            font-size: 36px;
+        }
+        
+        #prompt {
+            font-size: 16px;
+            padding: 10px 20px;
+        }
+    }
+    
+    @media (min-width: 768px) and (orientation: landscape) {
+        #joystickArea {
+            width: 110px;
+            height: 110px;
+        }
+        
+        #joystick {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .actionBtn, #shootBtn, #flashlightBtn, #quitBtn {
+            width: 65px;
+            height: 65px;
+        }
     }
 </style>
 </head>
@@ -83,14 +616,17 @@
 <!-- SCREENS -->
 <div id="startScreen" class="screen">
     <h1>CURSED APARTMENT</h1>
-    <div style="font-size:1.2rem;text-align:center;margin:20px;background:rgba(40,0,0,0.7);padding:15px;border-radius:10px;border:2px solid #600;">
-        <div style="color:#0ff;font-weight:bold;margin-bottom:10px;">🎯 FIND 5 KEYS → ESCAPE 10F DOOR!</div>
-        <div style="margin:8px 0;"><span style="color:#0f0">JOYSTICK:</span> MOVE</div>
-        <div style="margin:8px 0;"><span style="color:#f80">🔫 BUTTON:</span> SHOOT</div>
-        <div style="margin:8px 0;"><span style="color:#ff0">E BUTTON:</span> HIDE/INTERACT</div>
-        <div style="margin:8px 0;"><span style="color:#0ff">SP BUTTON:</span> PUZZLE/EXIT</div>
-        <div><span style="color:#cc0">🔦 ICON:</span> FLASHLIGHT</div>
+    
+    <div style="font-size: 1rem; text-align: center; margin: 15px; background: rgba(30, 0, 30, 0.6); padding: 15px; border-radius: 8px; border: 1px solid #600060; max-width: 90%;">
+        <div style="color: #a0f0ff; font-weight: bold; margin-bottom: 8px; font-size: 1.1rem;">🎯 FIND 5 KEYS → ESCAPE 10F DOOR!</div>
+        <div style="margin: 6px 0;"><span style="color: #0f0">JOYSTICK:</span> MOVE</div>
+        <div style="margin: 6px 0;"><span style="color: #f80">🔫 BUTTON:</span> SHOOT (Touch to aim)</div>
+        <div style="margin: 6px 0;"><span style="color: #ff0">E BUTTON:</span> HIDE/INTERACT</div>
+        <div style="margin: 6px 0;"><span style="color: #0ff">SP BUTTON:</span> PUZZLE/EXIT</div>
+        <div style="margin: 6px 0;"><span style="color: #cc0">🔦 ICON:</span> FLASHLIGHT</div>
+        <div style="margin: 6px 0;"><span style="color: #f0f">❌ ICON:</span> EXIT APP</div>
     </div>
+    
     <button class="btn" id="startBtn">SELECT MODE</button>
 </div>
 
@@ -107,13 +643,13 @@
 
 <div id="winScreen" class="screen">
     <h1>YOU ESCAPED!</h1>
-    <p style="font-size:1.8rem;margin:20px;">Freedom...</p>
+    <p style="font-size: 1.5rem; margin: 20px; text-align: center; color: #a0ffa0;">Freedom at last...</p>
     <button class="btn" onclick="location.reload()">PLAY AGAIN</button>
 </div>
 
 <div id="gameoverScreen" class="screen">
     <h1>YOU DIED</h1>
-    <p style="font-size:1.8rem;margin:20px;">The darkness won...</p>
+    <p style="font-size: 1.5rem; margin: 20px; text-align: center; color: #ffa0a0;">The darkness consumed you...</p>
     <button class="btn" onclick="location.reload()">TRY AGAIN</button>
 </div>
 
@@ -122,6 +658,7 @@
 
 <!-- GAME EFFECTS -->
 <div id="torch"></div>
+<div id="vignette"></div>
 <div id="blood"></div>
 <div id="hideText">HIDING...</div>
 <div id="prompt"></div>
@@ -132,6 +669,10 @@
         <div id="healthFill"></div>
         <div id="healthText">HP: 100 | KEYS: 0/5 | BULLETS: 10</div>
     </div>
+    
+    <div id="floorIndicator">FLOOR: 1</div>
+    
+    <div id="quitBtn">❌</div>
     
     <div id="joystickArea">
         <div id="joystickBase"></div>
@@ -151,21 +692,21 @@
 <!-- MODALS -->
 <div id="puzzleModal" class="modal">
     <div class="modal-content">
-        <h2 style="color:#f99;margin-bottom:20px;">SOLVE PUZZLE</h2>
-        <p id="puzzleQuestion" style="font-size:1.8rem;color:#0ff;margin:20px;"></p>
-        <input type="text" id="puzzleAnswer" style="width:100%;padding:12px;font-size:1.4rem;text-align:center;background:#111;color:#fff;border:2px solid #600;border-radius:8px;margin:15px 0;">
-        <div style="display:flex;gap:10px;margin-top:20px;">
-            <button id="submitPuzzle" class="btn" style="flex:1;">SUBMIT</button>
-            <button onclick="closePuzzle()" class="btn" style="background:#400;border-color:#600;">CANCEL</button>
+        <h2 style="color: #f99; margin-bottom: 15px; font-size: 1.8rem;">SOLVE PUZZLE</h2>
+        <p id="puzzleQuestion" style="font-size: 1.6rem; color: #0ff; margin: 15px 0; min-height: 60px; display: flex; align-items: center; justify-content: center;"></p>
+        <input type="text" id="puzzleAnswer" style="width: 100%; padding: 10px; font-size: 1.2rem; text-align: center; background: #111; color: #fff; border: 2px solid #600; border-radius: 6px; margin: 10px 0;" placeholder="Enter answer...">
+        <div style="display: flex; gap: 8px; margin-top: 15px;">
+            <button id="submitPuzzle" class="btn" style="flex: 1; padding: 10px;">SUBMIT</button>
+            <button onclick="closePuzzle()" class="btn" style="background: #400; border-color: #600; padding: 10px;">CANCEL</button>
         </div>
     </div>
 </div>
 
 <div id="liftModal" class="modal">
     <div class="modal-content">
-        <h2 style="color:#0ff;margin-bottom:20px;">SELECT FLOOR</h2>
-        <div id="floorButtons" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:20px 0;"></div>
-        <button onclick="closeLift()" class="btn" style="width:100%;">CANCEL</button>
+        <h2 style="color: #0ff; margin-bottom: 15px; font-size: 1.8rem;">SELECT FLOOR</h2>
+        <div id="floorButtons" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0;"></div>
+        <button onclick="closeLift()" class="btn" style="width: 100%;">CANCEL</button>
     </div>
 </div>
 
@@ -176,6 +717,84 @@
 <audio id="scareSound" src="https://assets.codepen.io/605876/jumpscare-scream.mp3"></audio>
 
 <script>
+// ============================================
+// FULLSCREEN MANAGEMENT - ALWAYS FULLSCREEN
+// ============================================
+function requestFullscreen() {
+    const elem = document.documentElement;
+    
+    if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) { /* Safari */
+        elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) { /* IE11 */
+        elem.msRequestFullscreen();
+    }
+    
+    // Hide browser UI on mobile
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        setTimeout(() => {
+            window.scrollTo(0, 1);
+        }, 100);
+    }
+}
+
+function exitFullscreen() {
+    if (document.exitFullscreen) {
+        document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+    } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+    }
+}
+
+// Automatically go fullscreen on page load
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        requestFullscreen();
+    }, 500);
+});
+
+// Also go fullscreen when orientation changes
+window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+        requestFullscreen();
+    }, 300);
+});
+
+// ============================================
+// APP EXIT FUNCTION - CLOSE APP
+// ============================================
+function exitApp() {
+    // Try different methods to close the app/browser
+    if (navigator.app && navigator.app.exitApp) {
+        // For Cordova/PhoneGap
+        navigator.app.exitApp();
+    } else if (navigator.device && navigator.device.exitApp) {
+        // For other hybrid apps
+        navigator.device.exitApp();
+    } else {
+        // For browsers - close window or tab
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            // Try to close the window/tab
+            window.close();
+            
+            // If window.close doesn't work, redirect to about:blank
+            setTimeout(() => {
+                window.location.href = 'about:blank';
+            }, 1000);
+            
+            // Show message
+            alert("Tap back button again to exit");
+        }
+    }
+}
+
 // ============================================
 // GAME VARIABLES
 // ============================================
@@ -195,8 +814,9 @@ let player = {
     bullets: 10,
     vx: 0,
     vy: 0,
-    speed: 3.5,
-    hidden: false
+    speed: 3.0,
+    hidden: false,
+    size: 20
 };
 let floor = 1, torchOn = false, battery = 100;
 let ghosts = [], puzzle = null, stairsUp = null, stairsDown = null, elevator = null, exitDoor = null, hidingSpots = [];
@@ -210,10 +830,14 @@ let joystickX = 0;
 let joystickY = 0;
 let joystickStartX = 0;
 let joystickStartY = 0;
-const JOYSTICK_RADIUS = 60;
+const JOYSTICK_RADIUS = 40;
+
+// Shoot aiming variables
+let shootTouchX = 0;
+let shootTouchY = 0;
 
 // ============================================
-// SCREEN MANAGEMENT
+// SCREEN MANAGEMENT - ALWAYS FULLSCREEN
 // ============================================
 function showScreen(screenId) {
     // Hide all screens
@@ -224,12 +848,16 @@ function showScreen(screenId) {
     // Show requested screen
     document.getElementById(screenId).style.display = 'flex';
     
+    // Make sure we're in fullscreen
+    requestFullscreen();
+    
     // Handle game screen
     if (screenId === 'gameScreen') {
         // Show game elements
         canvas.style.display = 'block';
         document.getElementById('controls').style.display = 'block';
         document.getElementById('torch').style.display = 'block';
+        document.getElementById('vignette').style.display = 'block';
         document.getElementById('blood').style.display = 'block';
         document.getElementById('hideText').style.display = 'block';
         document.getElementById('prompt').style.display = 'block';
@@ -243,6 +871,7 @@ function showScreen(screenId) {
         canvas.style.display = 'none';
         document.getElementById('controls').style.display = 'none';
         document.getElementById('torch').style.display = 'none';
+        document.getElementById('vignette').style.display = 'none';
         document.getElementById('blood').style.display = 'none';
         document.getElementById('hideText').style.display = 'none';
         document.getElementById('prompt').style.display = 'none';
@@ -288,8 +917,9 @@ function startGame() {
         bullets: 10,
         vx: 0,
         vy: 0,
-        speed: 3.5,
-        hidden: false
+        speed: 3.0,
+        hidden: false,
+        size: 20
     };
     floor = 1;
     torchOn = false;
@@ -306,6 +936,7 @@ function startGame() {
     
     // Update UI
     updateUI();
+    updateFloorIndicator();
     
     // Start audio
     const bgm = document.getElementById('bgm');
@@ -321,14 +952,24 @@ function startGame() {
 }
 
 // ============================================
-// MOBILE CONTROLS - WORKING VERSION
+// MOBILE CONTROLS - AIMING BULLETS
 // ============================================
+// Quit Button - EXIT APP
+document.getElementById('quitBtn').addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Exit the app completely
+    exitApp();
+}, { passive: false });
+
 // Joystick
 const joystickArea = document.getElementById('joystickArea');
 const joystick = document.getElementById('joystick');
 
 joystickArea.addEventListener('touchstart', function(e) {
     e.preventDefault();
+    e.stopPropagation();
     if (!gameRunning) return;
     
     joystickActive = true;
@@ -338,24 +979,24 @@ joystickArea.addEventListener('touchstart', function(e) {
     joystickStartY = rect.top + rect.height/2;
     
     updateJoystick(touch.clientX, touch.clientY);
-    console.log("Joystick touched");
-});
+}, { passive: false });
 
 joystickArea.addEventListener('touchmove', function(e) {
     e.preventDefault();
+    e.stopPropagation();
     if (!joystickActive || !gameRunning) return;
     
     const touch = e.touches[0];
     updateJoystick(touch.clientX, touch.clientY);
-});
+}, { passive: false });
 
 joystickArea.addEventListener('touchend', function(e) {
     e.preventDefault();
+    e.stopPropagation();
     joystickActive = false;
     joystickX = 0;
     joystickY = 0;
     joystick.style.transform = 'translate(-50%, -50%)';
-    console.log("Joystick released");
 });
 
 function updateJoystick(touchX, touchY) {
@@ -373,14 +1014,50 @@ function updateJoystick(touchX, touchY) {
     joystick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
 }
 
-// Shoot Button
-document.getElementById('shootBtn').addEventListener('touchstart', function(e) {
+// SHOOT BUTTON - AIM WITH TOUCH POSITION
+const shootBtn = document.getElementById('shootBtn');
+let shootBtnRect = null;
+
+// Update shoot button position on resize
+function updateShootBtnPosition() {
+    shootBtnRect = shootBtn.getBoundingClientRect();
+}
+
+// Initial position update
+updateShootBtnPosition();
+
+// Listen for touch on shoot button
+shootBtn.addEventListener('touchstart', function(e) {
     e.preventDefault();
     e.stopPropagation();
     if (!gameRunning || player.bullets <= 0) return;
     
-    console.log("Shooting!");
+    const touch = e.touches[0];
     
+    // Store the touch position for aiming
+    shootTouchX = touch.clientX;
+    shootTouchY = touch.clientY;
+    
+    // Calculate bullet direction based on touch position
+    const bulletDirectionX = shootTouchX - player.x;
+    const bulletDirectionY = shootTouchY - player.y;
+    const distance = Math.sqrt(bulletDirectionX * bulletDirectionX + bulletDirectionY * bulletDirectionY);
+    
+    // Normalize direction
+    const dirX = bulletDirectionX / distance;
+    const dirY = bulletDirectionY / distance;
+    
+    // Calculate target position (shoot towards touch point)
+    const targetX = player.x + dirX * 500;
+    const targetY = player.y + dirY * 500;
+    
+    // Shoot bullet
+    shootBullet(targetX, targetY);
+    
+}, { passive: false });
+
+// Shoot bullet function
+function shootBullet(targetX, targetY) {
     player.bullets--;
     updateUI();
     
@@ -389,23 +1066,40 @@ document.getElementById('shootBtn').addEventListener('touchstart', function(e) {
     gunSound.currentTime = 0;
     gunSound.play().catch(e => console.log("Gun sound error"));
     
-    // Create bullet
+    // Create bullet shooting towards target
     bullets.push({
         x: player.x,
         y: player.y,
-        tx: player.x + 300, // Shoot to the right
-        ty: player.y,
+        tx: targetX,
+        ty: targetY,
         life: 40
     });
     
-    // Check hit
+    // Check hit with ghosts
     ghosts = ghosts.filter(g => {
-        if (Math.hypot(g.x - (player.x + 150), g.y - player.y) < 70) {
+        // Calculate distance from bullet line to ghost
+        const bulletStartX = player.x;
+        const bulletStartY = player.y;
+        const bulletEndX = player.x + (targetX - player.x) * 0.3;
+        const bulletEndY = player.y + (targetY - player.y) * 0.3;
+        
+        // Simple collision check - if ghost is near the bullet path
+        const distanceToLine = pointToLineDistance(g.x, g.y, bulletStartX, bulletStartY, bulletEndX, bulletEndY);
+        
+        if (distanceToLine < 60) { // Ghost hit radius
             // Hit sound
             document.getElementById('hitSound').currentTime = 0;
             document.getElementById('hitSound').play().catch(e => console.log("Hit sound error"));
             
             // Blood effect
+            document.getElementById('blood').style.setProperty('--blood-x', g.x + 'px');
+            document.getElementById('blood').style.setProperty('--blood-y', g.y + 'px');
+            document.getElementById('blood').style.opacity = 1;
+            setTimeout(() => {
+                document.getElementById('blood').style.opacity = 0;
+            }, 500);
+            
+            // Blood particles
             for (let i = 0; i < 8; i++) {
                 bullets.push({
                     x: g.x,
@@ -416,11 +1110,46 @@ document.getElementById('shootBtn').addEventListener('touchstart', function(e) {
                     blood: true
                 });
             }
+            
             return false; // Remove ghost
         }
         return true;
     });
-});
+}
+
+// Calculate distance from point to line
+function pointToLineDistance(px, py, x1, y1, x2, y2) {
+    const A = px - x1;
+    const B = py - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
+
+    const dot = A * C + B * D;
+    const lenSq = C * C + D * D;
+    let param = -1;
+    
+    if (lenSq !== 0) {
+        param = dot / lenSq;
+    }
+
+    let xx, yy;
+
+    if (param < 0) {
+        xx = x1;
+        yy = y1;
+    } else if (param > 1) {
+        xx = x2;
+        yy = y2;
+    } else {
+        xx = x1 + param * C;
+        yy = y1 + param * D;
+    }
+
+    const dx = px - xx;
+    const dy = py - yy;
+    
+    return Math.sqrt(dx * dx + dy * dy);
+}
 
 // Hide Button
 document.getElementById('hideBtn').addEventListener('touchstart', function(e) {
@@ -428,15 +1157,13 @@ document.getElementById('hideBtn').addEventListener('touchstart', function(e) {
     e.stopPropagation();
     if (!gameRunning) return;
     
-    console.log("Hide button pressed");
-    
     // Toggle hide
     player.hidden = !player.hidden;
     document.getElementById('hideText').style.opacity = player.hidden ? 1 : 0;
     setTimeout(() => {
         document.getElementById('hideText').style.opacity = 0;
     }, 1000);
-});
+}, { passive: false });
 
 // Interact Button
 document.getElementById('interactBtn').addEventListener('touchstart', function(e) {
@@ -444,37 +1171,35 @@ document.getElementById('interactBtn').addEventListener('touchstart', function(e
     e.stopPropagation();
     if (!gameRunning) return;
     
-    console.log("Interact button pressed");
-    
     // Check elevator
-    if (elevator && Math.hypot(elevator.x - player.x, elevator.y - player.y) < 120) {
+    if (elevator && Math.hypot(elevator.x - player.x, elevator.y - player.y) < 100) {
         openLift();
         return;
     }
     
     // Check puzzle
-    if (puzzle && !puzzle.solved && Math.hypot(puzzle.x - player.x, puzzle.y - player.y) < 100) {
+    if (puzzle && !puzzle.solved && Math.hypot(puzzle.x - player.x, puzzle.y - player.y) < 80) {
         openPuzzle();
         return;
     }
     
     // Check stairs
-    if (stairsDown && Math.hypot(stairsDown.x - player.x, stairsDown.y - player.y) < 90) {
+    if (stairsDown && Math.hypot(stairsDown.x - player.x, stairsDown.y - player.y) < 70) {
         changeFloor(stairsDown.to);
         return;
     }
     
-    if (stairsUp && Math.hypot(stairsUp.x - player.x, stairsUp.y - player.y) < 90) {
+    if (stairsUp && Math.hypot(stairsUp.x - player.x, stairsUp.y - player.y) < 70) {
         changeFloor(stairsUp.to);
         return;
     }
     
     // Check exit
-    if (exitDoor && player.keys >= 5 && Math.hypot(exitDoor.x - player.x, exitDoor.y - player.y) < 130) {
+    if (exitDoor && player.keys >= 5 && Math.hypot(exitDoor.x - player.x, exitDoor.y - player.y) < 110) {
         winGame();
         return;
     }
-});
+}, { passive: false });
 
 // Flashlight Button
 document.getElementById('flashlightBtn').addEventListener('touchstart', function(e) {
@@ -483,10 +1208,9 @@ document.getElementById('flashlightBtn').addEventListener('touchstart', function
     
     torchOn = !torchOn;
     const btn = document.getElementById('flashlightBtn');
-    btn.style.background = torchOn ? 'rgba(100,100,0,0.9)' : 'rgba(40,40,0,0.7)';
+    btn.style.background = torchOn ? 'rgba(100,100,0,0.9)' : 'rgba(40,40,0,0.6)';
     btn.style.borderColor = torchOn ? '#ff0' : '#cc0';
-    console.log("Flashlight:", torchOn ? "ON" : "OFF");
-});
+}, { passive: false });
 
 // ============================================
 // GAME LOGIC
@@ -520,7 +1244,8 @@ function initFloor(f) {
             x: 100 + Math.random()*(width-200),
             y: 100 + Math.random()*(height-200),
             speed: ghostSpeed + Math.random()*0.5,
-            damage: ghostDamage
+            damage: ghostDamage,
+            size: 35
         });
     }
     
@@ -538,27 +1263,31 @@ function initFloor(f) {
     if (puzzle.hasBattery) batteryGiven = true;
     
     // Elevator and stairs
-    elevator = {x: width/2, y: height-140};
-    if (f > 1) stairsDown = {x: 90, y: height/2, to: f-1};
-    if (f < 10) stairsUp = {x: width-90, y: height/2, to: f+1};
-    if (f === 10) exitDoor = {x: width/2, y: 120};
+    elevator = {x: width/2, y: height-120};
+    if (f > 1) stairsDown = {x: 80, y: height/2, to: f-1};
+    if (f < 10) stairsUp = {x: width-80, y: height/2, to: f+1};
+    if (f === 10) exitDoor = {x: width/2, y: 100};
     
     // Hiding spots
     hidingSpots = [
-        {x: 90, y: 120},
-        {x: 90, y: height-120},
-        {x: width-90, y: 120},
-        {x: width-90, y: height-120}
+        {x: 80, y: 100},
+        {x: 80, y: height-100},
+        {x: width-80, y: 100},
+        {x: width-80, y: height-100}
     ];
     
+    updateFloorIndicator();
     updateUI();
 }
 
 function updateUI() {
-    // Update health
     document.getElementById('healthFill').style.width = player.hp + '%';
     document.getElementById('healthText').textContent = 
         `HP: ${Math.floor(player.hp)} | KEYS: ${player.keys}/5 | BULLETS: ${player.bullets}`;
+}
+
+function updateFloorIndicator() {
+    document.getElementById('floorIndicator').textContent = `FLOOR: ${floor}`;
 }
 
 // ============================================
@@ -569,15 +1298,15 @@ function gameLoop() {
     
     try {
         // Clear canvas
-        ctx.fillStyle = '#0b0b0b';
+        ctx.fillStyle = '#0a0a0a';
         ctx.fillRect(0, 0, width, height);
         
         // Draw walls
-        ctx.fillStyle = '#222';
-        ctx.fillRect(0, 0, width, 70);
-        ctx.fillRect(0, height-70, width, 70);
-        ctx.fillRect(0, 0, 70, height);
-        ctx.fillRect(width-70, 0, 70, height);
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(0, 0, width, 60);
+        ctx.fillRect(0, height-60, width, 60);
+        ctx.fillRect(0, 0, 60, height);
+        ctx.fillRect(width-60, 0, 60, height);
         
         // Player movement
         if (joystickActive) {
@@ -594,8 +1323,8 @@ function gameLoop() {
         player.y += player.vy;
         
         // Keep player in bounds
-        player.x = Math.max(80, Math.min(width-80, player.x));
-        player.y = Math.max(80, Math.min(height-80, player.y));
+        player.x = Math.max(70, Math.min(width-70, player.x));
+        player.y = Math.max(70, Math.min(height-70, player.y));
         
         // Draw bullets
         for (let i = bullets.length-1; i >= 0; i--) {
@@ -604,13 +1333,13 @@ function gameLoop() {
             const dy = b.ty - b.y;
             const dist = Math.hypot(dx, dy);
             
-            if (dist < 25 || b.life-- <= 0) {
+            if (dist < 20 || b.life-- <= 0) {
                 bullets.splice(i, 1);
                 continue;
             }
             
-            b.x += dx/dist * 30;
-            b.y += dy/dist * 30;
+            b.x += dx/dist * 25;
+            b.y += dy/dist * 25;
             
             ctx.strokeStyle = b.blood ? '#f00' : '#ff0';
             ctx.lineWidth = b.blood ? 4 : 5;
@@ -618,26 +1347,44 @@ function gameLoop() {
             ctx.moveTo(b.x, b.y);
             ctx.lineTo(b.x + dx*0.3, b.y + dy*0.3);
             ctx.stroke();
+            
+            // Glow effect for normal bullets
+            if (!b.blood) {
+                ctx.shadowColor = '#ff0';
+                ctx.shadowBlur = 10;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
         }
         
         // Torch effect
-        document.getElementById('torch').style.opacity = torchOn && battery > 0 ? 1 : 0;
+        const torch = document.getElementById('torch');
+        torch.style.opacity = torchOn && battery > 0 ? 1 : 0;
         if (torchOn && battery > 0) {
-            battery -= 0.06;
+            battery -= 0.05;
             if (battery <= 0) {
                 torchOn = false;
                 battery = 0;
             }
         }
         
+        // Update torch position
+        torch.style.setProperty('--x', player.x + 'px');
+        torch.style.setProperty('--y', player.y + 'px');
+        
         // Draw player
-        ctx.fillStyle = player.hidden ? '#888' : '#fff';
-        ctx.fillRect(player.x-15, player.y-25, 30, 50);
+        const size = player.size;
+        ctx.fillStyle = player.hidden ? '#666' : '#fff';
+        ctx.fillRect(player.x - size/2, player.y - size, size, size*2);
+        
+        // Player details
         ctx.fillStyle = '#000';
-        ctx.fillRect(player.x-10, player.y-18, 20, 15);
-        ctx.fillStyle = player.hidden ? '#666' : '#f66';
-        ctx.fillRect(player.x-20, player.y+5, 15, 35);
-        ctx.fillRect(player.x+5, player.y+5, 15, 35);
+        ctx.fillRect(player.x - size/3, player.y - size*0.7, size*0.66, size*0.4);
+        
+        // Arms
+        ctx.fillStyle = player.hidden ? '#444' : '#c66';
+        ctx.fillRect(player.x - size*0.8, player.y, size*0.6, size*0.8);
+        ctx.fillRect(player.x + size*0.2, player.y, size*0.6, size*0.8);
         
         // Update and draw ghosts
         for (const g of ghosts) {
@@ -646,43 +1393,49 @@ function gameLoop() {
                 const dy = player.y - g.y;
                 const dist = Math.hypot(dx, dy);
                 
-                if (dist > 40) {
+                if (dist > 30) {
                     g.x += dx/dist * g.speed;
                     g.y += dy/dist * g.speed;
                 }
             }
             
-            // Draw ghost
+            // Draw ghost body
             ctx.fillStyle = '#111';
             ctx.beginPath();
-            ctx.arc(g.x, g.y, 40, 0, Math.PI*2);
+            ctx.arc(g.x, g.y, g.size, 0, Math.PI*2);
             ctx.fill();
+            
+            // Glow effect
+            ctx.shadowColor = '#f00';
+            ctx.shadowBlur = 15;
+            ctx.fill();
+            ctx.shadowBlur = 0;
             
             // Eyes
             ctx.fillStyle = '#300';
             ctx.beginPath();
-            ctx.arc(g.x-15, g.y-12, 10, 0, Math.PI*2);
+            ctx.arc(g.x - 12, g.y - 10, 8, 0, Math.PI*2);
             ctx.fill();
             ctx.beginPath();
-            ctx.arc(g.x+15, g.y-12, 10, 0, Math.PI*2);
+            ctx.arc(g.x + 12, g.y - 10, 8, 0, Math.PI*2);
             ctx.fill();
             
             // Pupils
             ctx.fillStyle = '#f00';
             ctx.beginPath();
-            ctx.arc(g.x-15, g.y-12, 5, 0, Math.PI*2);
+            ctx.arc(g.x - 12, g.y - 10, 4, 0, Math.PI*2);
             ctx.fill();
             ctx.beginPath();
-            ctx.arc(g.x+15, g.y-12, 5, 0, Math.PI*2);
+            ctx.arc(g.x + 12, g.y - 10, 4, 0, Math.PI*2);
             ctx.fill();
             
             // Damage player
-            if (Math.hypot(g.x-player.x, g.y-player.y) < 55 && !player.hidden) {
+            if (Math.hypot(g.x - player.x, g.y - player.y) < size + g.size && !player.hidden) {
                 player.hp -= g.damage;
                 document.getElementById('blood').style.opacity = 1;
                 setTimeout(() => {
                     document.getElementById('blood').style.opacity = 0;
-                }, 400);
+                }, 300);
                 
                 if (player.hp <= 0) {
                     player.hp = 0;
@@ -695,13 +1448,17 @@ function gameLoop() {
         
         // Draw hiding spots
         hidingSpots.forEach(s => {
-            ctx.fillStyle = player.hidden && Math.hypot(s.x-player.x, s.y-player.y) < 90 ? '#003300' : '#322';
-            ctx.fillRect(s.x-60, s.y-80, 120, 160);
-            ctx.fillStyle = '#544';
-            ctx.fillRect(s.x-48, s.y-68, 48, 136);
-            ctx.fillRect(s.x, s.y-68, 48, 136);
+            ctx.fillStyle = player.hidden && Math.hypot(s.x - player.x, s.y - player.y) < 70 ? '#003300' : '#222';
+            ctx.fillRect(s.x - 50, s.y - 60, 100, 120);
+            
+            // Cabinet doors
+            ctx.fillStyle = '#433';
+            ctx.fillRect(s.x - 40, s.y - 50, 35, 100);
+            ctx.fillRect(s.x + 5, s.y - 50, 35, 100);
+            
+            // Label
             ctx.fillStyle = '#0f0';
-            ctx.font = '18px Courier New';
+            ctx.font = '14px "Courier New"';
             ctx.textAlign = 'center';
             ctx.fillText("HIDE", s.x, s.y);
         });
@@ -710,73 +1467,80 @@ function gameLoop() {
         if (puzzle) {
             const color = puzzle.solved ? '#0f0' : '#ff0';
             ctx.fillStyle = color;
-            ctx.fillRect(puzzle.x-60, puzzle.y-60, 120, 120);
+            ctx.fillRect(puzzle.x - 50, puzzle.y - 50, 100, 100);
             ctx.fillStyle = '#000';
-            ctx.fillRect(puzzle.x-45, puzzle.y-45, 90, 90);
+            ctx.fillRect(puzzle.x - 35, puzzle.y - 35, 70, 70);
             ctx.fillStyle = '#fff';
-            ctx.font = 'bold 24px Courier New';
+            ctx.font = 'bold 20px "Courier New"';
             ctx.textAlign = 'center';
-            ctx.fillText(puzzle.solved ? "SOLVED" : "REWARD", puzzle.x, puzzle.y+8);
+            ctx.fillText(puzzle.solved ? "SOLVED" : "REWARD", puzzle.x, puzzle.y + 6);
+            
+            // Glow effect
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 20;
+            ctx.fillRect(puzzle.x - 50, puzzle.y - 50, 100, 100);
+            ctx.shadowBlur = 0;
         }
         
         // Draw elevator
         if (elevator) {
-            ctx.fillStyle = '#444';
-            ctx.fillRect(elevator.x-70, elevator.y-80, 140, 160);
+            ctx.fillStyle = '#333';
+            ctx.fillRect(elevator.x - 60, elevator.y - 60, 120, 120);
             ctx.fillStyle = '#0ff';
-            ctx.font = 'bold 26px Courier New';
+            ctx.font = 'bold 22px "Courier New"';
             ctx.textAlign = 'center';
-            ctx.fillText("LIFT", elevator.x, elevator.y-25);
+            ctx.fillText("ELEVATOR", elevator.x, elevator.y - 15);
         }
         
         // Draw stairs
         if (stairsDown) {
-            ctx.fillStyle = '#555';
-            ctx.fillRect(stairsDown.x-50, stairsDown.y-70, 100, 140);
+            ctx.fillStyle = '#444';
+            ctx.fillRect(stairsDown.x - 40, stairsDown.y - 50, 80, 100);
             ctx.fillStyle = '#fff';
-            ctx.font = 'bold 32px Courier New';
+            ctx.font = 'bold 26px "Courier New"';
             ctx.textAlign = 'center';
-            ctx.fillText("DN", stairsDown.x, stairsDown.y+10);
+            ctx.fillText("DOWN", stairsDown.x, stairsDown.y + 8);
         }
         
         if (stairsUp) {
-            ctx.fillStyle = '#555';
-            ctx.fillRect(stairsUp.x-50, stairsUp.y-70, 100, 140);
+            ctx.fillStyle = '#444';
+            ctx.fillRect(stairsUp.x - 40, stairsUp.y - 50, 80, 100);
             ctx.fillStyle = '#fff';
-            ctx.font = 'bold 32px Courier New';
+            ctx.font = 'bold 26px "Courier New"';
             ctx.textAlign = 'center';
-            ctx.fillText("UP", stairsUp.x, stairsUp.y+10);
+            ctx.fillText("UP", stairsUp.x, stairsUp.y + 8);
         }
         
         // Draw exit door
         if (exitDoor) {
             if (player.keys >= 5) {
                 ctx.fillStyle = '#c00';
-                ctx.fillRect(exitDoor.x-100, exitDoor.y-150, 200, 300);
+                ctx.fillRect(exitDoor.x - 80, exitDoor.y - 100, 160, 200);
                 ctx.fillStyle = '#000';
-                ctx.fillRect(exitDoor.x-80, exitDoor.y-70, 160, 140);
+                ctx.fillRect(exitDoor.x - 60, exitDoor.y - 50, 120, 100);
                 
                 // Animated effect
-                for (let i = 0; i < 15; i++) {
-                    const a = Date.now()*0.005 + i*0.3;
+                const time = Date.now() * 0.005;
+                for (let i = 0; i < 12; i++) {
+                    const a = time + i * 0.3;
                     ctx.strokeStyle = '#f00';
-                    ctx.lineWidth = 3;
+                    ctx.lineWidth = 2;
                     ctx.beginPath();
-                    ctx.arc(exitDoor.x, exitDoor.y, 60+i*10, a, a+2.2);
+                    ctx.arc(exitDoor.x, exitDoor.y, 50 + i * 8, a, a + 2.0);
                     ctx.stroke();
                 }
                 
                 ctx.fillStyle = '#fff';
-                ctx.font = 'bold 36px Courier New';
+                ctx.font = 'bold 30px "Courier New"';
                 ctx.textAlign = 'center';
-                ctx.fillText("EXIT", exitDoor.x, exitDoor.y+20);
+                ctx.fillText("EXIT", exitDoor.x, exitDoor.y + 10);
             } else {
                 ctx.fillStyle = '#400';
-                ctx.fillRect(exitDoor.x-100, exitDoor.y-150, 200, 300);
+                ctx.fillRect(exitDoor.x - 80, exitDoor.y - 100, 160, 200);
                 ctx.fillStyle = '#822';
-                ctx.font = 'bold 28px Courier New';
+                ctx.font = 'bold 24px "Courier New"';
                 ctx.textAlign = 'center';
-                ctx.fillText("LOCKED", exitDoor.x, exitDoor.y+10);
+                ctx.fillText("LOCKED", exitDoor.x, exitDoor.y + 10);
             }
         }
         
@@ -784,22 +1548,22 @@ function gameLoop() {
         const prompt = document.getElementById('prompt');
         prompt.style.display = 'none';
         
-        if (elevator && Math.hypot(elevator.x-player.x, elevator.y-player.y) < 110) {
-            prompt.textContent = "SP → LIFT";
+        if (elevator && Math.hypot(elevator.x - player.x, elevator.y - player.y) < 90) {
+            prompt.textContent = "SP → ELEVATOR";
             prompt.style.display = 'block';
-        } else if (stairsDown && Math.hypot(stairsDown.x-player.x, stairsDown.y-player.y) < 85) {
-            prompt.textContent = "SP → DOWN";
+        } else if (stairsDown && Math.hypot(stairsDown.x - player.x, stairsDown.y - player.y) < 65) {
+            prompt.textContent = "SP → GO DOWN";
             prompt.style.display = 'block';
-        } else if (stairsUp && Math.hypot(stairsUp.x-player.x, stairsUp.y-player.y) < 85) {
-            prompt.textContent = "SP → UP";
+        } else if (stairsUp && Math.hypot(stairsUp.x - player.x, stairsUp.y - player.y) < 65) {
+            prompt.textContent = "SP → GO UP";
             prompt.style.display = 'block';
-        } else if (hidingSpots.some(s => Math.hypot(s.x-player.x, s.y-player.y) < 85)) {
+        } else if (hidingSpots.some(s => Math.hypot(s.x - player.x, s.y - player.y) < 65)) {
             prompt.textContent = "E → HIDE";
             prompt.style.display = 'block';
-        } else if (puzzle && !puzzle.solved && Math.hypot(puzzle.x-player.x, puzzle.y-player.y) < 95) {
-            prompt.textContent = "SP → PUZZLE";
+        } else if (puzzle && !puzzle.solved && Math.hypot(puzzle.x - player.x, puzzle.y - player.y) < 75) {
+            prompt.textContent = "SP → SOLVE PUZZLE";
             prompt.style.display = 'block';
-        } else if (exitDoor && player.keys >= 5 && Math.hypot(exitDoor.x-player.x, exitDoor.y-player.y) < 140) {
+        } else if (exitDoor && player.keys >= 5 && Math.hypot(exitDoor.x - player.x, exitDoor.y - player.y) < 110) {
             prompt.textContent = "SP → ESCAPE!";
             prompt.style.display = 'block';
         }
@@ -823,13 +1587,17 @@ function openPuzzle() {
         {q: "8×8=?", a: "64"},
         {q: "15-6=?", a: "9"},
         {q: "25÷5=?", a: "5"},
-        {q: "12+18=?", a: "30"}
+        {q: "12+18=?", a: "30"},
+        {q: "3×7=?", a: "21"},
+        {q: "14+9=?", a: "23"},
+        {q: "36÷6=?", a: "6"}
     ];
     
-    const q = questions[Math.floor(Math.random()*questions.length)];
+    const q = questions[Math.floor(Math.random() * questions.length)];
     document.getElementById('puzzleQuestion').textContent = q.q;
     document.getElementById('puzzleAnswer').value = '';
     document.getElementById('puzzleModal').style.display = 'flex';
+    document.getElementById('puzzleAnswer').focus();
     window.currentAnswer = q.a;
 }
 
@@ -878,8 +1646,10 @@ function openLift() {
     for (let i = 1; i <= 10; i++) {
         const btn = document.createElement('button');
         btn.className = 'btn';
-        btn.textContent = i;
+        btn.textContent = 'F' + i;
         btn.style.background = i === floor ? '#c00' : '#800';
+        btn.style.padding = '8px 5px';
+        btn.style.fontSize = i === floor ? '1.1rem' : '1rem';
         btn.onclick = () => {
             closeLift();
             if (i !== floor) changeFloor(i);
@@ -911,16 +1681,18 @@ function showAlert(msg) {
         top: 40%;
         left: 50%;
         transform: translateX(-50%);
-        background: rgba(100,0,0,0.9);
-        color: #fcc;
-        padding: 15px 25px;
-        border-radius: 10px;
-        border: 3px solid #c00;
-        font-size: 1.3rem;
+        background: rgba(100, 0, 0, 0.9);
+        color: #ffd0d0;
+        padding: 12px 20px;
+        border-radius: 8px;
+        border: 2px solid #c00;
+        font-size: 1.1rem;
         z-index: 100000;
         text-align: center;
         max-width: 80%;
-        box-shadow: 0 0 25px #800;
+        box-shadow: 0 0 20px #800;
+        font-family: 'Courier New', monospace;
+        backdrop-filter: blur(5px);
     `;
     alert.textContent = msg;
     document.body.appendChild(alert);
@@ -956,9 +1728,12 @@ window.addEventListener('resize', () => {
     canvas.height = height;
     
     if (player) {
-        player.x = Math.min(player.x, width-80);
-        player.y = Math.min(player.y, height-80);
+        player.x = Math.min(player.x, width - 70);
+        player.y = Math.min(player.y, height - 70);
     }
+    
+    // Update shoot button position
+    updateShootBtnPosition();
 });
 
 // Prevent touch behaviors
@@ -971,9 +1746,28 @@ document.addEventListener('touchmove', function(e) {
     }
 }, { passive: false });
 
-// Start the game
+// Prevent context menu
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    return false;
+});
+
+// Handle back button press (Android)
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' || e.key === 'Backspace') {
+        e.preventDefault();
+        // If in game screen, go to main menu
+        if (document.getElementById('gameScreen').style.display === 'flex') {
+            showScreen('startScreen');
+        } else {
+            exitApp();
+        }
+    }
+});
+
+// Initialize - Start in fullscreen
 showScreen('startScreen');
-console.log("Game ready!");
+console.log("CURSED APARTMENT - Touch Aiming Mode");
 </script>
 </body>
 </html>
