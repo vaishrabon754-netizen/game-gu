@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CURSED APARTMENT - Mobile Horror Game</title>
+<title>CURSED APARTMENT - BORO ROOM VERSION</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -31,17 +31,18 @@
         position: fixed;
     }
     
-    /* CANVAS - FULLSCREEN */
+    /* CANVAS - VERY LARGE FOR BIG ROOMS */
     #gameCanvas {
-        position: fixed;
+        position: absolute;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
+        width: 4000px;
+        height: 4000px;
         z-index: 1;
         display: block;
         image-rendering: pixelated;
         image-rendering: crisp-edges;
+        transform-origin: 0 0;
     }
     
     /* SCREENS - ALWAYS FULLSCREEN */
@@ -185,13 +186,14 @@
         width: 100%;
         height: 100%;
         background: radial-gradient(circle 350px at var(--x,50%) var(--y,50%), 
-                    rgba(150, 120, 80, 0.4) 0%, 
-                    rgba(80, 60, 40, 0.2) 30%, 
-                    transparent 70%);
+                    rgba(200, 160, 100, 0.6) 0%, 
+                    rgba(120, 80, 40, 0.4) 20%, 
+                    rgba(0, 0, 0, 0.9) 70%);
         opacity: 0;
         pointer-events: none;
         z-index: 2;
-        mix-blend-mode: overlay;
+        mix-blend-mode: lighten;
+        transition: opacity 0.3s;
     }
     
     #vignette {
@@ -201,8 +203,8 @@
         width: 100%;
         height: 100%;
         background: radial-gradient(ellipse at center, 
-                    transparent 40%, 
-                    rgba(0, 0, 0, 0.9) 80%);
+                    transparent 20%, 
+                    rgba(0, 0, 0, 0.9) 60%);
         pointer-events: none;
         z-index: 4;
     }
@@ -236,6 +238,36 @@
         letter-spacing: 6px;
         font-weight: bold;
         font-family: 'Courier New', monospace;
+        transition: opacity 0.3s;
+    }
+    
+    #hideStatus {
+        position: absolute;
+        top: 150px;
+        left: 12px;
+        background: rgba(20, 0, 0, 0.8);
+        border: 2px solid #a00000;
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: #ffd0d0;
+        font-size: 14px;
+        font-weight: bold;
+        z-index: 902;
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+    }
+    
+    #hideStatus.hidden {
+        background: rgba(0, 50, 0, 0.8);
+        border-color: #00aa00;
+        color: #a0ffa0;
+    }
+    
+    #hideStatusIcon {
+        font-size: 16px;
     }
     
     #prompt {
@@ -258,7 +290,127 @@
         font-family: 'Courier New', monospace;
     }
     
-    /* MOBILE CONTROLS - SINGLE ACTION BUTTON */
+    /* BATTERY INDICATOR */
+    #batteryIndicator {
+        position: absolute;
+        top: 180px;
+        left: 12px;
+        background: rgba(20, 20, 0, 0.8);
+        border: 2px solid #cc0;
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: #ff0;
+        font-size: 14px;
+        font-weight: bold;
+        z-index: 902;
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    #batteryIcon {
+        font-size: 16px;
+        color: #ff0;
+    }
+    
+    #batteryLevel {
+        width: 60px;
+        height: 10px;
+        background: #333;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-left: 5px;
+    }
+    
+    #batteryFill {
+        height: 100%;
+        background: linear-gradient(90deg, #ff0, #0f0);
+        width: 100%;
+        transition: width 0.5s;
+    }
+    
+    /* INVENTORY */
+    #inventory {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90%;
+        max-width: 500px;
+        background: rgba(20, 0, 20, 0.95);
+        border: 3px solid #a000a0;
+        border-radius: 12px;
+        padding: 15px;
+        z-index: 10000;
+        display: none;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 40px rgba(160, 0, 160, 0.7);
+    }
+    
+    .inventory-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-top: 10px;
+    }
+    
+    .inventory-item {
+        background: rgba(40, 0, 40, 0.8);
+        border: 2px solid #800080;
+        border-radius: 8px;
+        padding: 10px;
+        text-align: center;
+        min-height: 70px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .inventory-item:hover {
+        background: rgba(80, 0, 80, 0.9);
+        transform: scale(1.05);
+    }
+    
+    .inventory-item:active {
+        transform: scale(0.95);
+    }
+    
+    .item-icon {
+        font-size: 24px;
+        margin-bottom: 5px;
+    }
+    
+    .item-count {
+        font-size: 12px;
+        color: #ffd0d0;
+    }
+    
+    /* MINIMAP */
+    #miniMap {
+        position: absolute;
+        bottom: 120px;
+        right: 12px;
+        width: 150px;
+        height: 150px;
+        background: rgba(0, 0, 0, 0.7);
+        border: 2px solid #a000a0;
+        border-radius: 8px;
+        z-index: 902;
+        backdrop-filter: blur(5px);
+        overflow: hidden;
+    }
+    
+    #miniMapCanvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+    
+    /* MOBILE CONTROLS */
     #controls {
         position: fixed;
         top: 0;
@@ -312,7 +464,24 @@
         letter-spacing: 0.5px;
     }
     
-    /* JOYSTICK - LEFT BOTTOM (SMALLER) */
+    /* FLOOR INDICATOR */
+    #floorIndicator {
+        position: absolute;
+        top: 40px;
+        left: 12px;
+        background: rgba(10, 0, 10, 0.7);
+        border: 2px solid #a000a0;
+        border-radius: 6px;
+        padding: 4px 8px;
+        color: #f0c0f0;
+        font-size: 12px;
+        font-weight: bold;
+        z-index: 902;
+        backdrop-filter: blur(4px);
+        font-family: 'Courier New', monospace;
+    }
+    
+    /* JOYSTICK */
     #joystickArea {
         position: absolute;
         bottom: 15px;
@@ -345,7 +514,7 @@
         box-shadow: 0 0 15px rgba(200, 0, 0, 0.5);
     }
     
-    /* SINGLE ACTION BUTTON - RIGHT SIDE (COMBINED HIDE/INTERACT) */
+    /* ACTION BUTTONS */
     #actionBtn {
         position: absolute;
         bottom: 15px;
@@ -373,7 +542,6 @@
         transform: scale(0.9);
     }
     
-    /* SHOOT BUTTON - BULLETS SHOOT AT TOUCH POSITION (SMALLER) */
     #shootBtn {
         position: absolute;
         bottom: 90px;
@@ -399,7 +567,7 @@
         transform: scale(0.9);
     }
     
-    /* FLASHLIGHT TOGGLE */
+    /* FLASHLIGHT & INVENTORY BUTTONS */
     #flashlightBtn {
         position: absolute;
         top: 60px;
@@ -425,24 +593,33 @@
         transform: scale(0.9);
     }
     
-    /* FLOOR INDICATOR */
-    #floorIndicator {
+    #inventoryBtn {
         position: absolute;
-        top: 40px;
-        left: 12px;
-        background: rgba(10, 0, 10, 0.7);
-        border: 2px solid #a000a0;
-        border-radius: 6px;
-        padding: 4px 8px;
-        color: #f0c0f0;
-        font-size: 12px;
+        top: 110px;
+        right: 12px;
+        width: 45px;
+        height: 45px;
+        background: rgba(0, 40, 80, 0.6);
+        border: 2px solid #0af;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #0ff;
+        font-size: 18px;
         font-weight: bold;
-        z-index: 902;
-        backdrop-filter: blur(4px);
-        font-family: 'Courier New', monospace;
+        pointer-events: auto;
+        z-index: 901;
+        box-shadow: 0 5px 15px rgba(0, 170, 255, 0.4);
+        backdrop-filter: blur(5px);
     }
     
-    /* QUIT BUTTON - TOP RIGHT (SMALLER) */
+    #inventoryBtn:active {
+        background: rgba(0, 80, 160, 0.9);
+        transform: scale(0.9);
+    }
+    
+    /* QUIT BUTTON */
     #quitBtn {
         position: absolute;
         top: 12px;
@@ -475,7 +652,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.92);
+        background: rgba(0, 0, 0, 0.95);
         z-index: 10000;
         display: none;
         justify-content: center;
@@ -485,12 +662,12 @@
     
     .modal-content {
         background: linear-gradient(145deg, #1a001a, #0a000a);
-        padding: 15px;
-        border-radius: 10px;
+        padding: 20px;
+        border-radius: 12px;
         border: 3px solid #a000a0;
         text-align: center;
         max-width: 95%;
-        width: 350px;
+        width: 400px;
         box-shadow: 0 0 40px rgba(160, 0, 160, 0.6);
         position: relative;
         overflow: hidden;
@@ -531,7 +708,7 @@
             height: 40px;
         }
         
-        #actionBtn {
+        #actionBtn, #shootBtn {
             width: 60px;
             height: 60px;
             font-size: 18px;
@@ -540,25 +717,27 @@
         }
         
         #shootBtn {
-            width: 60px;
-            height: 60px;
             bottom: 85px;
-            right: 12px;
             font-size: 20px;
         }
         
-        #flashlightBtn {
+        #flashlightBtn, #inventoryBtn, #quitBtn {
             width: 40px;
             height: 40px;
             font-size: 16px;
+        }
+        
+        #flashlightBtn {
             top: 55px;
             right: 10px;
         }
         
+        #inventoryBtn {
+            top: 100px;
+            right: 10px;
+        }
+        
         #quitBtn {
-            width: 40px;
-            height: 40px;
-            font-size: 16px;
             top: 10px;
             right: 10px;
         }
@@ -574,6 +753,20 @@
             font-size: 9px;
         }
         
+        #hideStatus {
+            top: 135px;
+            left: 10px;
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+        
+        #batteryIndicator {
+            top: 165px;
+            left: 10px;
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+        
         #floorIndicator {
             top: 35px;
             left: 10px;
@@ -581,40 +774,15 @@
             padding: 3px 6px;
         }
         
-        #hideText {
-            font-size: 32px;
+        #miniMap {
+            width: 120px;
+            height: 120px;
+            bottom: 110px;
+            right: 10px;
         }
         
-        #prompt {
-            font-size: 14px;
-            padding: 8px 16px;
-        }
-        
-        .modal-content {
-            padding: 12px;
-            width: 320px;
-        }
-    }
-    
-    @media (min-width: 768px) and (orientation: landscape) {
-        #joystickArea {
-            width: 95px;
-            height: 95px;
-        }
-        
-        #joystick {
-            width: 42px;
-            height: 42px;
-        }
-        
-        #actionBtn, #shootBtn {
-            width: 60px;
-            height: 60px;
-        }
-        
-        #flashlightBtn, #quitBtn {
-            width: 45px;
-            height: 45px;
+        .inventory-grid {
+            grid-template-columns: repeat(3, 1fr);
         }
     }
 </style>
@@ -625,12 +793,13 @@
     <h1>CURSED APARTMENT</h1>
     
     <div style="font-size: 0.9rem; text-align: center; margin: 12px; background: rgba(30, 0, 30, 0.6); padding: 12px; border-radius: 8px; border: 1px solid #600060; max-width: 90%;">
-        <div style="color: #a0f0ff; font-weight: bold; margin-bottom: 6px; font-size: 1rem;">🎯 FIND 5 KEYS → ESCAPE 10F DOOR!</div>
-        <div style="margin: 5px 0;"><span style="color: #0f0">JOYSTICK:</span> MOVE</div>
-        <div style="margin: 5px 0;"><span style="color: #f80">🔫 BUTTON:</span> SHOOT (Touch to aim)</div>
-        <div style="margin: 5px 0;"><span style="color: #ff0">A BUTTON:</span> HIDE/INTERACT (Near hide spots)</div>
-        <div style="margin: 5px 0;"><span style="color: #cc0">🔦 ICON:</span> FLASHLIGHT</div>
-        <div style="margin: 5px 0;"><span style="color: #f0f">❌ ICON:</span> EXIT APP</div>
+        <div style="color: #a0f0ff; font-weight: bold; margin-bottom: 8px; font-size: 1rem;">🏢 12 FLOORS • BORO ROOMS • EXPLORE KORO!</div>
+        <div style="margin: 5px 0;"><span style="color: #0f0">JOYSTICK:</span> MOVE (Camera follows)</div>
+        <div style="margin: 5px 0;"><span style="color: #f80">🔫:</span> SHOOT (Touch to aim)</div>
+        <div style="margin: 5px 0;"><span style="color: #ff0">A:</span> HIDE/INTERACT (Hide status shown)</div>
+        <div style="margin: 5px 0;"><span style="color: #cc0">🔦:</span> TORCH (Dark areas)</div>
+        <div style="margin: 5px 0;"><span style="color: #0ff">F:</span> INVENTORY (Use items)</div>
+        <div style="margin: 5px 0;"><span style="color: #f0f">❌:</span> EXIT APP</div>
     </div>
     
     <button class="btn" id="startBtn">SELECT MODE</button>
@@ -648,8 +817,8 @@
 <div id="gameScreen" class="screen"></div>
 
 <div id="winScreen" class="screen">
-    <h1>YOU ESCAPED!</h1>
-    <p style="font-size: 1.3rem; margin: 15px; text-align: center; color: #a0ffa0;">Freedom at last...</p>
+    <h1>ESCAPED!</h1>
+    <p style="font-size: 1.3rem; margin: 15px; text-align: center; color: #a0ffa0;" id="winMessage">Freedom at last...</p>
     <button class="btn" onclick="location.reload()">PLAY AGAIN</button>
 </div>
 
@@ -662,6 +831,9 @@
 <!-- CANVAS -->
 <canvas id="gameCanvas"></canvas>
 
+<!-- MINIMAP CANVAS -->
+<canvas id="miniMapCanvas"></canvas>
+
 <!-- GAME EFFECTS -->
 <div id="torch"></div>
 <div id="vignette"></div>
@@ -669,14 +841,43 @@
 <div id="hideText">HIDING...</div>
 <div id="prompt"></div>
 
+<!-- HIDE STATUS -->
+<div id="hideStatus">
+    <div id="hideStatusIcon">👤</div>
+    <div>VISIBLE</div>
+</div>
+
+<!-- BATTERY INDICATOR -->
+<div id="batteryIndicator">
+    <div id="batteryIcon">🔦</div>
+    <div>TORCH:</div>
+    <div id="batteryLevel">
+        <div id="batteryFill"></div>
+    </div>
+</div>
+
+<!-- INVENTORY -->
+<div id="inventory">
+    <h2 style="color: #f99; text-align: center; margin-bottom: 15px; font-size: 1.5rem;">INVENTORY</h2>
+    <div class="inventory-grid" id="inventoryGrid">
+        <!-- Items will be added here dynamically -->
+    </div>
+    <button onclick="closeInventory()" class="btn" style="margin-top: 15px; width: 100%;">CLOSE</button>
+</div>
+
+<!-- MINIMAP -->
+<div id="miniMap">
+    <!-- Minimap canvas is here -->
+</div>
+
 <!-- MOBILE CONTROLS -->
 <div id="controls">
     <div id="healthBar">
         <div id="healthFill"></div>
-        <div id="healthText">HP: 100 | KEYS: 0/5 | BULLETS: 10</div>
+        <div id="healthText">HP: 100 | KEYS: 0/5 | CAR PARTS: 0/10</div>
     </div>
     
-    <div id="floorIndicator">FLOOR: 1</div>
+    <div id="floorIndicator">FLOOR: 1 (BASEMENT)</div>
     
     <div id="quitBtn">❌</div>
     
@@ -690,26 +891,20 @@
     <div id="actionBtn">A</div>
     
     <div id="flashlightBtn">🔦</div>
+    
+    <div id="inventoryBtn">F</div>
 </div>
 
 <!-- MODALS -->
 <div id="puzzleModal" class="modal">
     <div class="modal-content">
         <h2 style="color: #f99; margin-bottom: 12px; font-size: 1.6rem;">SOLVE PUZZLE</h2>
-        <p id="puzzleQuestion" style="font-size: 1.4rem; color: #0ff; margin: 12px 0; min-height: 50px; display: flex; align-items: center; justify-content: center;"></p>
-        <input type="text" id="puzzleAnswer" style="width: 100%; padding: 8px; font-size: 1.1rem; text-align: center; background: #111; color: #fff; border: 2px solid #600; border-radius: 6px; margin: 8px 0;" placeholder="Enter answer...">
-        <div style="display: flex; gap: 6px; margin-top: 12px;">
-            <button id="submitPuzzle" class="btn" style="flex: 1; padding: 8px; font-size: 1rem;">SUBMIT</button>
-            <button onclick="closePuzzle()" class="btn" style="background: #400; border-color: #600; padding: 8px; font-size: 1rem;">CANCEL</button>
+        <p id="puzzleQuestion" style="font-size: 1.4rem; color: #0ff; margin: 12px 0; min-height: 60px; display: flex; align-items: center; justify-content: center; text-align: center;"></p>
+        <input type="text" id="puzzleAnswer" style="width: 100%; padding: 10px; font-size: 1.2rem; text-align: center; background: #111; color: #fff; border: 2px solid #600; border-radius: 6px; margin: 10px 0;" placeholder="Enter answer..." autocomplete="off">
+        <div style="display: flex; gap: 8px; margin-top: 15px;">
+            <button id="submitPuzzle" class="btn" style="flex: 1; padding: 10px; font-size: 1.1rem;">SUBMIT</button>
+            <button onclick="closePuzzle()" class="btn" style="background: #400; border-color: #600; padding: 10px; font-size: 1.1rem;">CANCEL</button>
         </div>
-    </div>
-</div>
-
-<div id="liftModal" class="modal">
-    <div class="modal-content">
-        <h2 style="color: #0ff; margin-bottom: 12px; font-size: 1.6rem;">SELECT FLOOR</h2>
-        <div id="floorButtons" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 12px 0;"></div>
-        <button onclick="closeLift()" class="btn" style="width: 100%; font-size: 1rem;">CANCEL</button>
     </div>
 </div>
 
@@ -721,132 +916,103 @@
 
 <script>
 // ============================================
-// FULLSCREEN MANAGEMENT - ALWAYS FULLSCREEN
+// FULLSCREEN MANAGEMENT
 // ============================================
 function requestFullscreen() {
     const elem = document.documentElement;
+    if (elem.requestFullscreen) elem.requestFullscreen();
+    else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+    else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
     
-    if (elem.requestFullscreen) {
-        elem.requestFullscreen();
-    } else if (elem.webkitRequestFullscreen) { /* Safari */
-        elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) { /* IE11 */
-        elem.msRequestFullscreen();
-    }
-    
-    // Hide browser UI on mobile
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        setTimeout(() => {
-            window.scrollTo(0, 1);
-        }, 100);
+        setTimeout(() => window.scrollTo(0, 1), 100);
     }
 }
 
-function exitFullscreen() {
-    if (document.exitFullscreen) {
-        document.exitFullscreen();
-    } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-    } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen();
-    } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-    }
-}
-
-// Automatically go fullscreen on page load
+// Automatically go fullscreen
 window.addEventListener('load', () => {
-    setTimeout(() => {
-        requestFullscreen();
-    }, 500);
+    setTimeout(() => requestFullscreen(), 500);
 });
 
-// Also go fullscreen when orientation changes
 window.addEventListener('orientationchange', () => {
-    setTimeout(() => {
-        requestFullscreen();
-    }, 300);
+    setTimeout(() => requestFullscreen(), 300);
 });
 
 // ============================================
-// APP EXIT FUNCTION - CLOSE APP
-// ============================================
-function exitApp() {
-    // Try different methods to close the app/browser
-    if (navigator.app && navigator.app.exitApp) {
-        // For Cordova/PhoneGap
-        navigator.app.exitApp();
-    } else if (navigator.device && navigator.device.exitApp) {
-        // For other hybrid apps
-        navigator.device.exitApp();
-    } else {
-        // For browsers - close window or tab
-        if (window.history.length > 1) {
-            window.history.back();
-        } else {
-            // Try to close the window/tab
-            window.close();
-            
-            // If window.close doesn't work, redirect to about:blank
-            setTimeout(() => {
-                window.location.href = 'about:blank';
-            }, 1000);
-            
-            // Show message
-            alert("Tap back button again to exit");
-        }
-    }
-}
-
-// ============================================
-// GAME VARIABLES
+// GAME VARIABLES - BORO ROOMS
 // ============================================
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-let width = window.innerWidth;
-let height = window.innerHeight;
-canvas.width = width;
-canvas.height = height;
+const miniMapCanvas = document.getElementById('miniMapCanvas');
+const miniMapCtx = miniMapCanvas.getContext('2d');
+
+// Set canvas sizes - VERY LARGE FOR BIG ROOMS
+canvas.width = 4000;
+canvas.height = 4000;
+miniMapCanvas.width = 150;
+miniMapCanvas.height = 150;
+
+// Game world size
+const WORLD_WIDTH = 4000;
+const WORLD_HEIGHT = 4000;
+
+// Viewport (camera) variables
+let cameraX = 0;
+let cameraY = 0;
+let VIEWPORT_WIDTH = window.innerWidth;
+let VIEWPORT_HEIGHT = window.innerHeight;
+
+// Room settings - BORO ROOMS
+const ROOM_WIDTH = 800;  // 2x bigger
+const ROOM_HEIGHT = 600; // 2x bigger
 
 let gameMode = 'easy';
 let player = {
-    x: width/2,
-    y: height/2,
+    x: WORLD_WIDTH/2,
+    y: WORLD_HEIGHT/2,
     hp: 100,
     keys: 0,
-    bullets: 10,
+    bullets: 30,
+    carParts: 0,
+    helicopterKey: false,
+    oilCan: false,
+    ductTape: false,
     vx: 0,
     vy: 0,
-    speed: 4.0, // Increased player speed
+    speed: 5.0, // Faster for bigger rooms
     hidden: false,
-    size: 18,
+    size: 25,
     hidingSpot: null
 };
-let floor = 1, torchOn = false, battery = 100;
-let ghosts = [], puzzle = null, stairsUp = null, stairsDown = null, elevator = null, exitDoor = null, hidingSpots = [];
-let bullets = [], batteryGiven = false;
+
+let floor = 1;
+let torchOn = false;
+let battery = 100;
+let ghosts = [];
+let puzzles = [];
+let stairsUp = null;
+let stairsDown = null;
+let elevator = null;
+let exitDoor = null;
+let carRoom = null;
+let garageDoor = null;
+let hidingSpots = [];
+let bullets = [];
+let monster = null;
+let helicopter = null;
 let gameRunning = false;
 let gameLoopId = null;
-
-// Puzzle tracking - first 5 puzzles have keys, next 5 have other rewards
 let puzzlesSolved = 0;
-const puzzleRewards = [
-    { type: 'key' },
-    { type: 'key' },
-    { type: 'key' },
-    { type: 'key' },
-    { type: 'key' },
-    { type: 'battery', amount: 50 },
-    { type: 'battery', amount: 50 },
-    { type: 'battery', amount: 50 },
-    { type: 'battery', amount: 50 },
-    { type: 'battery', amount: 50 },
-    { type: 'bullets', amount: 10 },
-    { type: 'bullets', amount: 10 },
-    { type: 'bullets', amount: 10 },
-    { type: 'bullets', amount: 10 },
-    { type: 'bullets', amount: 10 }
-];
+let totalPuzzles = 20;
+let inventory = {
+    'car_part': 0,
+    'health_pack': 0,
+    'battery_pack': 0,
+    'ammo': 0
+};
+
+// Map rooms - BORO ROOMS
+let rooms = [];
 
 // Joystick variables
 let joystickActive = false;
@@ -854,7 +1020,7 @@ let joystickX = 0;
 let joystickY = 0;
 let joystickStartX = 0;
 let joystickStartY = 0;
-const JOYSTICK_RADIUS = 35;
+const JOYSTICK_RADIUS = 40; // Bigger joystick
 
 // Shoot aiming variables
 let shootTouchX = 0;
@@ -864,23 +1030,44 @@ let shootTouchY = 0;
 let nearHidingSpot = false;
 
 // ============================================
-// SCREEN MANAGEMENT - ALWAYS FULLSCREEN
+// CAMERA SYSTEM
+// ============================================
+function updateCamera() {
+    // Smooth camera follow
+    const targetX = player.x - VIEWPORT_WIDTH / 2;
+    const targetY = player.y - VIEWPORT_HEIGHT / 2;
+    
+    // Smooth interpolation
+    cameraX += (targetX - cameraX) * 0.08; // Slower follow for smoother experience
+    cameraY += (targetY - cameraY) * 0.08;
+    
+    // Clamp camera to world bounds
+    cameraX = Math.max(0, Math.min(WORLD_WIDTH - VIEWPORT_WIDTH, cameraX));
+    cameraY = Math.max(0, Math.min(WORLD_HEIGHT - VIEWPORT_HEIGHT, cameraY));
+    
+    // Apply camera transform to canvas
+    canvas.style.transform = `translate(${-cameraX}px, ${-cameraY}px)`;
+    
+    // Update torch position relative to viewport
+    const torch = document.getElementById('torch');
+    const viewportX = player.x - cameraX;
+    const viewportY = player.y - cameraY;
+    torch.style.setProperty('--x', viewportX + 'px');
+    torch.style.setProperty('--y', viewportY + 'px');
+}
+
+// ============================================
+// SCREEN MANAGEMENT
 // ============================================
 function showScreen(screenId) {
-    // Hide all screens
     ['startScreen','modeScreen','gameScreen','winScreen','gameoverScreen'].forEach(id => {
         document.getElementById(id).style.display = 'none';
     });
     
-    // Show requested screen
     document.getElementById(screenId).style.display = 'flex';
-    
-    // Make sure we're in fullscreen
     requestFullscreen();
     
-    // Handle game screen
     if (screenId === 'gameScreen') {
-        // Show game elements
         canvas.style.display = 'block';
         document.getElementById('controls').style.display = 'block';
         document.getElementById('torch').style.display = 'block';
@@ -888,13 +1075,13 @@ function showScreen(screenId) {
         document.getElementById('blood').style.display = 'block';
         document.getElementById('hideText').style.display = 'block';
         document.getElementById('prompt').style.display = 'block';
+        document.getElementById('hideStatus').style.display = 'flex';
+        document.getElementById('batteryIndicator').style.display = 'flex';
+        document.getElementById('miniMap').style.display = 'block';
+        document.getElementById('floorIndicator').style.display = 'block';
         
-        // Start game
-        if (!gameRunning) {
-            startGame();
-        }
+        if (!gameRunning) startGame();
     } else {
-        // Hide game elements
         canvas.style.display = 'none';
         document.getElementById('controls').style.display = 'none';
         document.getElementById('torch').style.display = 'none';
@@ -902,8 +1089,11 @@ function showScreen(screenId) {
         document.getElementById('blood').style.display = 'none';
         document.getElementById('hideText').style.display = 'none';
         document.getElementById('prompt').style.display = 'none';
+        document.getElementById('hideStatus').style.display = 'none';
+        document.getElementById('batteryIndicator').style.display = 'none';
+        document.getElementById('miniMap').style.display = 'none';
+        document.getElementById('floorIndicator').style.display = 'none';
         
-        // Stop game
         if (gameRunning) {
             gameRunning = false;
             if (gameLoopId) cancelAnimationFrame(gameLoopId);
@@ -928,7 +1118,6 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
 function startGame() {
     console.log("Starting game in", gameMode, "mode");
     
-    // Stop any existing game
     if (gameLoopId) {
         cancelAnimationFrame(gameLoopId);
         gameLoopId = null;
@@ -937,43 +1126,63 @@ function startGame() {
     // Reset game state
     gameRunning = true;
     player = {
-        x: width/2,
-        y: height/2,
+        x: WORLD_WIDTH/2,
+        y: WORLD_HEIGHT/2,
         hp: 100,
         keys: 0,
-        bullets: 10,
+        bullets: 30,
+        carParts: 0,
+        helicopterKey: false,
+        oilCan: false,
+        ductTape: false,
         vx: 0,
         vy: 0,
-        speed: 4.0, // Increased player speed
+        speed: 5.0,
         hidden: false,
-        size: 18,
+        size: 25,
         hidingSpot: null
     };
+    
     floor = 1;
     torchOn = false;
     battery = 100;
     ghosts = [];
-    puzzle = null;
+    puzzles = [];
     stairsUp = null;
     stairsDown = null;
     elevator = null;
     exitDoor = null;
+    carRoom = null;
+    garageDoor = null;
     hidingSpots = [];
     bullets = [];
-    batteryGiven = false;
+    monster = null;
+    helicopter = null;
     puzzlesSolved = 0;
     
-    // Update UI
+    inventory = {
+        'car_part': 0,
+        'health_pack': 0,
+        'battery_pack': 0,
+        'ammo': 15
+    };
+    
+    // Generate BIG rooms for exploration
+    generateBoroRooms();
+    
     updateUI();
     updateFloorIndicator();
+    updateInventory();
+    updateHideStatus();
+    updateBatteryDisplay();
     
     // Start audio
     const bgm = document.getElementById('bgm');
-    bgm.volume = 0.5;
+    bgm.volume = 0.3;
     bgm.currentTime = 0;
     bgm.play().catch(e => console.log("Audio error:", e));
     
-    // Initialize first floor
+    // Initialize basement (floor 1)
     initFloor(1);
     
     // Start game loop
@@ -981,14 +1190,92 @@ function startGame() {
 }
 
 // ============================================
-// MOBILE CONTROLS - SINGLE ACTION BUTTON
+// BORO ROOM GENERATION
+// ============================================
+function generateBoroRooms() {
+    rooms = [];
+    
+    // Generate 12 rooms with BIG sizes
+    // Floors 1-6: Left side
+    for (let i = 0; i < 6; i++) {
+        rooms.push({
+            x: 200,
+            y: 200 + i * (ROOM_HEIGHT + 100),
+            width: ROOM_WIDTH,
+            height: ROOM_HEIGHT,
+            floor: i + 1,
+            visited: false
+        });
+    }
+    
+    // Floors 7-11: Right side
+    for (let i = 6; i < 11; i++) {
+        rooms.push({
+            x: WORLD_WIDTH - ROOM_WIDTH - 200,
+            y: 200 + (i - 6) * (ROOM_HEIGHT + 100),
+            width: ROOM_WIDTH,
+            height: ROOM_HEIGHT,
+            floor: i + 1,
+            visited: false
+        });
+    }
+    
+    // Rooftop (floor 12) - Center top
+    rooms.push({
+        x: WORLD_WIDTH/2 - ROOM_WIDTH/2,
+        y: 100,
+        width: ROOM_WIDTH,
+        height: ROOM_HEIGHT,
+        floor: 12,
+        visited: false,
+        isRooftop: true
+    });
+}
+
+// ============================================
+// HIDE STATUS SYSTEM
+// ============================================
+function updateHideStatus() {
+    const hideStatus = document.getElementById('hideStatus');
+    const hideIcon = document.getElementById('hideStatusIcon');
+    
+    if (player.hidden) {
+        hideStatus.classList.add('hidden');
+        hideIcon.textContent = '👻';
+        hideStatus.querySelector('div:last-child').textContent = 'HIDDEN';
+        document.getElementById('hideText').style.opacity = 1;
+    } else {
+        hideStatus.classList.remove('hidden');
+        hideIcon.textContent = '👤';
+        hideStatus.querySelector('div:last-child').textContent = 'VISIBLE';
+        document.getElementById('hideText').style.opacity = 0;
+    }
+}
+
+// ============================================
+// BATTERY DISPLAY
+// ============================================
+function updateBatteryDisplay() {
+    const batteryFill = document.getElementById('batteryFill');
+    batteryFill.style.width = battery + '%';
+    
+    // Change color based on battery level
+    if (battery > 50) {
+        batteryFill.style.background = 'linear-gradient(90deg, #0f0, #ff0)';
+    } else if (battery > 20) {
+        batteryFill.style.background = 'linear-gradient(90deg, #ff0, #f00)';
+    } else {
+        batteryFill.style.background = '#f00';
+    }
+}
+
+// ============================================
+// MOBILE CONTROLS
 // ============================================
 // Quit Button - EXIT APP
 document.getElementById('quitBtn').addEventListener('touchstart', function(e) {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Exit the app completely
     exitApp();
 }, { passive: false });
 
@@ -1043,49 +1330,34 @@ function updateJoystick(touchX, touchY) {
     joystick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
 }
 
-// SHOOT BUTTON - AIM WITH TOUCH POSITION
+// SHOOT BUTTON
 const shootBtn = document.getElementById('shootBtn');
-let shootBtnRect = null;
 
-// Update shoot button position on resize
-function updateShootBtnPosition() {
-    shootBtnRect = shootBtn.getBoundingClientRect();
-}
-
-// Initial position update
-updateShootBtnPosition();
-
-// Listen for touch on shoot button
 shootBtn.addEventListener('touchstart', function(e) {
     e.preventDefault();
     e.stopPropagation();
     if (!gameRunning || player.bullets <= 0) return;
     
     const touch = e.touches[0];
+    // Convert screen touch to world coordinates
+    shootTouchX = touch.clientX + cameraX;
+    shootTouchY = touch.clientY + cameraY;
     
-    // Store the touch position for aiming
-    shootTouchX = touch.clientX;
-    shootTouchY = touch.clientY;
-    
-    // Calculate bullet direction based on touch position
+    // Calculate bullet direction
     const bulletDirectionX = shootTouchX - player.x;
     const bulletDirectionY = shootTouchY - player.y;
     const distance = Math.sqrt(bulletDirectionX * bulletDirectionX + bulletDirectionY * bulletDirectionY);
     
-    // Normalize direction
-    const dirX = bulletDirectionX / distance;
-    const dirY = bulletDirectionY / distance;
-    
-    // Calculate target position (shoot towards touch point)
-    const targetX = player.x + dirX * 500;
-    const targetY = player.y + dirY * 500;
-    
-    // Shoot bullet
-    shootBullet(targetX, targetY);
-    
+    if (distance > 10) {
+        const dirX = bulletDirectionX / distance;
+        const dirY = bulletDirectionY / distance;
+        const targetX = player.x + dirX * 800; // Longer range for bigger rooms
+        const targetY = player.y + dirY * 800;
+        
+        shootBullet(targetX, targetY);
+    }
 }, { passive: false });
 
-// Shoot bullet function
 function shootBullet(targetX, targetY) {
     player.bullets--;
     updateUI();
@@ -1095,55 +1367,70 @@ function shootBullet(targetX, targetY) {
     gunSound.currentTime = 0;
     gunSound.play().catch(e => console.log("Gun sound error"));
     
-    // Create bullet shooting towards target
+    // Create bullet
     bullets.push({
         x: player.x,
         y: player.y,
         tx: targetX,
         ty: targetY,
-        life: 40
+        life: 60 // Longer life for bigger rooms
     });
     
     // Check hit with ghosts
     ghosts = ghosts.filter(g => {
-        // Calculate distance from bullet line to ghost
         const bulletStartX = player.x;
         const bulletStartY = player.y;
         const bulletEndX = player.x + (targetX - player.x) * 0.3;
         const bulletEndY = player.y + (targetY - player.y) * 0.3;
         
-        // Simple collision check - if ghost is near the bullet path
         const distanceToLine = pointToLineDistance(g.x, g.y, bulletStartX, bulletStartY, bulletEndX, bulletEndY);
         
-        if (distanceToLine < 50) { // Ghost hit radius
-            // Hit sound
+        if (distanceToLine < 60) { // Bigger hit radius
             document.getElementById('hitSound').currentTime = 0;
             document.getElementById('hitSound').play().catch(e => console.log("Hit sound error"));
             
             // Blood effect
-            document.getElementById('blood').style.setProperty('--blood-x', g.x + 'px');
-            document.getElementById('blood').style.setProperty('--blood-y', g.y + 'px');
+            document.getElementById('blood').style.setProperty('--blood-x', (g.x - cameraX) + 'px');
+            document.getElementById('blood').style.setProperty('--blood-y', (g.y - cameraY) + 'px');
             document.getElementById('blood').style.opacity = 1;
             setTimeout(() => {
                 document.getElementById('blood').style.opacity = 0;
             }, 500);
             
             // Blood particles
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < 8; i++) { // More blood
                 bullets.push({
                     x: g.x,
                     y: g.y,
-                    tx: g.x + (Math.random()-0.5)*150,
-                    ty: g.y + (Math.random()-0.5)*150,
-                    life: 20,
+                    tx: g.x + (Math.random()-0.5)*200,
+                    ty: g.y + (Math.random()-0.5)*200,
+                    life: 25,
                     blood: true
                 });
             }
             
-            return false; // Remove ghost
+            return false;
         }
         return true;
     });
+    
+    // Check hit with monster
+    if (monster && Math.hypot(monster.x - player.x, monster.y - player.y) < 400) {
+        const bulletStartX = player.x;
+        const bulletStartY = player.y;
+        const bulletEndX = player.x + (targetX - player.x) * 0.3;
+        const bulletEndY = player.y + (targetY - player.y) * 0.3;
+        
+        const distanceToLine = pointToLineDistance(monster.x, monster.y, bulletStartX, bulletStartY, bulletEndX, bulletEndY);
+        
+        if (distanceToLine < 100) { // Bigger hit radius for monster
+            monster.hp -= 8;
+            if (monster.hp <= 0) {
+                monster = null;
+                showAlert("🎉 MONSTER DEFEATED! Check car for key!");
+            }
+        }
+    }
 }
 
 // Calculate distance from point to line
@@ -1189,27 +1476,23 @@ actionBtn.addEventListener('touchstart', function(e) {
     if (!gameRunning) return;
     
     if (player.hidden) {
-        // If already hiding, come out of hiding
         player.hidden = false;
         player.hidingSpot = null;
-        document.getElementById('hideText').style.opacity = 0;
+        updateHideStatus();
         
-        // Reset ghost movement
         ghosts.forEach(g => {
             g.wandering = false;
         });
     } else if (nearHidingSpot) {
-        // If near hiding spot, hide
         player.hidden = true;
-        document.getElementById('hideText').style.opacity = 1;
+        updateHideStatus();
         
-        // Find the nearest hiding spot
         let closestSpot = null;
         let closestDistance = Infinity;
         
         hidingSpots.forEach(spot => {
             const dist = Math.hypot(spot.x - player.x, spot.y - player.y);
-            if (dist < 60 && dist < closestDistance) {
+            if (dist < 80 && dist < closestDistance) { // Bigger hide range
                 closestDistance = dist;
                 closestSpot = spot;
             }
@@ -1221,45 +1504,95 @@ actionBtn.addEventListener('touchstart', function(e) {
             player.y = closestSpot.y;
         }
         
-        // Make ghosts wander randomly
         ghosts.forEach(g => {
             g.wandering = true;
-            g.wanderTargetX = g.x + (Math.random()-0.5)*200;
-            g.wanderTargetY = g.y + (Math.random()-0.5)*200;
+            g.wanderTargetX = g.x + (Math.random()-0.5)*300;
+            g.wanderTargetY = g.y + (Math.random()-0.5)*300;
         });
         
         setTimeout(() => {
-            document.getElementById('hideText').style.opacity = 0;
+            if (player.hidden) {
+                document.getElementById('hideText').style.opacity = 0.3;
+            }
         }, 1500);
     } else {
-        // Otherwise, interact with other objects
-        // Check elevator
-        if (elevator && Math.hypot(elevator.x - player.x, elevator.y - player.y) < 90) {
-            openLift();
-            return;
+        // Check puzzle interaction
+        for (let puzzle of puzzles) {
+            if (!puzzle.solved && Math.hypot(puzzle.x - player.x, puzzle.y - player.y) < 90) { // Bigger range
+                openPuzzle(puzzle);
+                return;
+            }
         }
         
-        // Check puzzle
-        if (puzzle && !puzzle.solved && Math.hypot(puzzle.x - player.x, puzzle.y - player.y) < 70) {
-            openPuzzle();
+        // Check elevator
+        if (elevator && Math.hypot(elevator.x - player.x, elevator.y - player.y) < 120) { // Bigger range
+            changeFloorViaElevator();
             return;
         }
         
         // Check stairs
-        if (stairsDown && Math.hypot(stairsDown.x - player.x, stairsDown.y - player.y) < 60) {
+        if (stairsDown && Math.hypot(stairsDown.x - player.x, stairsDown.y - player.y) < 80) {
             changeFloor(stairsDown.to);
             return;
         }
         
-        if (stairsUp && Math.hypot(stairsUp.x - player.x, stairsUp.y - player.y) < 60) {
+        if (stairsUp && Math.hypot(stairsUp.x - player.x, stairsUp.y - player.y) < 80) {
             changeFloor(stairsUp.to);
             return;
         }
         
-        // Check exit
-        if (exitDoor && player.keys >= 5 && Math.hypot(exitDoor.x - player.x, exitDoor.y - player.y) < 100) {
-            winGame();
+        // Check car
+        if (carRoom && Math.hypot(carRoom.x - player.x, carRoom.y - player.y) < 150) {
+            if (player.carParts >= 10) {
+                showAlert("🚗 Car is fully repaired! Now find the garage door!");
+            } else {
+                showAlert(`🚗 Car needs ${10 - player.carParts} more parts to repair!`);
+            }
             return;
+        }
+        
+        // Check garage door
+        if (garageDoor && player.carParts >= 10 && Math.hypot(garageDoor.x - player.x, garageDoor.y - player.y) < 120) {
+            winGame('car');
+            return;
+        }
+        
+        // Check helicopter
+        if (helicopter && Math.hypot(helicopter.x - player.x, helicopter.y - player.y) < 120) {
+            if (player.helicopterKey && player.oilCan && player.ductTape) {
+                winGame('helicopter');
+            } else {
+                let missing = [];
+                if (!player.helicopterKey) missing.push("helicopter key");
+                if (!player.oilCan) missing.push("oil can");
+                if (!player.ductTape) missing.push("duct tape");
+                showAlert(`🚁 Need: ${missing.join(", ")}!`);
+            }
+            return;
+        }
+        
+        // Check monster for helicopter key
+        if (!monster && floor === 11 && Math.abs(player.x - carRoom.x) < 150 && Math.abs(player.y - carRoom.y) < 100) {
+            player.helicopterKey = true;
+            showAlert("🔑 Found Helicopter Key in the car!");
+            updateInventory();
+            return;
+        }
+        
+        // Check for oil can and duct tape on rooftop
+        if (floor === 12 && helicopter) {
+            if (Math.abs(player.x - (helicopter.x - 200)) < 100 && Math.abs(player.y - helicopter.y) < 100 && !player.oilCan) {
+                player.oilCan = true;
+                showAlert("🛢️ Found Oil Can!");
+                updateInventory();
+                return;
+            }
+            if (Math.abs(player.x - (helicopter.x + 200)) < 100 && Math.abs(player.y - helicopter.y) < 100 && !player.ductTape) {
+                player.ductTape = true;
+                showAlert("🎞️ Found Duct Tape!");
+                updateInventory();
+                return;
+            }
         }
     }
 }, { passive: false });
@@ -1269,127 +1602,516 @@ document.getElementById('flashlightBtn').addEventListener('touchstart', function
     e.preventDefault();
     e.stopPropagation();
     
-    torchOn = !torchOn;
-    const btn = document.getElementById('flashlightBtn');
-    btn.style.background = torchOn ? 'rgba(100,100,0,0.9)' : 'rgba(40,40,0,0.6)';
-    btn.style.borderColor = torchOn ? '#ff0' : '#cc0';
+    if (battery > 0) {
+        torchOn = !torchOn;
+        const btn = document.getElementById('flashlightBtn');
+        btn.style.background = torchOn ? 'rgba(100,100,0,0.9)' : 'rgba(40,40,0,0.6)';
+        btn.style.borderColor = torchOn ? '#ff0' : '#cc0';
+        
+        // Update torch visibility
+        document.getElementById('torch').style.opacity = torchOn ? 1 : 0;
+    } else {
+        showAlert("🔋 Torch battery empty!");
+        torchOn = false;
+        const btn = document.getElementById('flashlightBtn');
+        btn.style.background = 'rgba(40,40,0,0.6)';
+        btn.style.borderColor = '#cc0';
+        document.getElementById('torch').style.opacity = 0;
+    }
 }, { passive: false });
 
+// Inventory Button
+document.getElementById('inventoryBtn').addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    openInventory();
+}, { passive: false });
+
+function changeFloorViaElevator() {
+    let floors = [];
+    for (let i = 1; i <= 12; i++) {
+        if (i !== floor) floors.push(i);
+    }
+    
+    const randomFloor = floors[Math.floor(Math.random() * floors.length)];
+    showAlert(`🏢 Elevator taking you to Floor ${randomFloor}...`);
+    setTimeout(() => {
+        changeFloor(randomFloor);
+    }, 1000);
+}
+
 // ============================================
-// GAME LOGIC
+// INVENTORY SYSTEM
+// ============================================
+function openInventory() {
+    updateInventory();
+    document.getElementById('inventory').style.display = 'block';
+}
+
+function closeInventory() {
+    document.getElementById('inventory').style.display = 'none';
+}
+
+function updateInventory() {
+    const grid = document.getElementById('inventoryGrid');
+    grid.innerHTML = '';
+    
+    // Car Parts
+    if (inventory.car_part > 0) {
+        const item = document.createElement('div');
+        item.className = 'inventory-item';
+        item.innerHTML = `
+            <div class="item-icon">🔧</div>
+            <div>Car Part</div>
+            <div class="item-count">${inventory.car_part}</div>
+        `;
+        item.onclick = () => useItem('car_part');
+        grid.appendChild(item);
+    }
+    
+    // Health Packs
+    if (inventory.health_pack > 0) {
+        const item = document.createElement('div');
+        item.className = 'inventory-item';
+        item.innerHTML = `
+            <div class="item-icon">❤️</div>
+            <div>Health Pack</div>
+            <div class="item-count">${inventory.health_pack}</div>
+        `;
+        item.onclick = () => useItem('health_pack');
+        grid.appendChild(item);
+    }
+    
+    // Battery Packs
+    if (inventory.battery_pack > 0) {
+        const item = document.createElement('div');
+        item.className = 'inventory-item';
+        item.innerHTML = `
+            <div class="item-icon">🔋</div>
+            <div>Battery</div>
+            <div class="item-count">${inventory.battery_pack}</div>
+        `;
+        item.onclick = () => useItem('battery_pack');
+        grid.appendChild(item);
+    }
+    
+    // Ammo
+    if (inventory.ammo > 0) {
+        const item = document.createElement('div');
+        item.className = 'inventory-item';
+        item.innerHTML = `
+            <div class="item-icon">🔫</div>
+            <div>Ammo</div>
+            <div class="item-count">${inventory.ammo}</div>
+        `;
+        item.onclick = () => useItem('ammo');
+        grid.appendChild(item);
+    }
+    
+    // Helicopter Items
+    if (player.helicopterKey) {
+        const item = document.createElement('div');
+        item.className = 'inventory-item';
+        item.innerHTML = `
+            <div class="item-icon">🚁</div>
+            <div>Helicopter Key</div>
+            <div class="item-count">KEY</div>
+        `;
+        grid.appendChild(item);
+    }
+    
+    if (player.oilCan) {
+        const item = document.createElement('div');
+        item.className = 'inventory-item';
+        item.innerHTML = `
+            <div class="item-icon">🛢️</div>
+            <div>Oil Can</div>
+            <div class="item-count">OIL</div>
+        `;
+        grid.appendChild(item);
+    }
+    
+    if (player.ductTape) {
+        const item = document.createElement('div');
+        item.className = 'inventory-item';
+        item.innerHTML = `
+            <div class="item-icon">🎞️</div>
+            <div>Duct Tape</div>
+            <div class="item-count">TAPE</div>
+        `;
+        grid.appendChild(item);
+    }
+}
+
+function useItem(type) {
+    switch(type) {
+        case 'health_pack':
+            if (inventory.health_pack > 0) {
+                player.hp = Math.min(100, player.hp + 50);
+                inventory.health_pack--;
+                showAlert("❤️ +50 HP!");
+                updateUI();
+                updateInventory();
+            }
+            break;
+            
+        case 'battery_pack':
+            if (inventory.battery_pack > 0) {
+                battery = Math.min(100, battery + 50);
+                inventory.battery_pack--;
+                showAlert("🔋 +50% Battery!");
+                updateBatteryDisplay();
+                updateInventory();
+            }
+            break;
+            
+        case 'ammo':
+            if (inventory.ammo > 0) {
+                player.bullets += 15;
+                inventory.ammo--;
+                showAlert("🔫 +15 Bullets!");
+                updateUI();
+                updateInventory();
+            }
+            break;
+            
+        case 'car_part':
+            showAlert("Car parts automatically used when collected!");
+            break;
+    }
+}
+
+// ============================================
+// GAME LOGIC - BORO ROOMS
 // ============================================
 function initFloor(f) {
     floor = f;
     ghosts = [];
-    puzzle = null;
+    puzzles = [];
     stairsUp = null;
     stairsDown = null;
     elevator = null;
     exitDoor = null;
+    carRoom = null;
+    garageDoor = null;
     hidingSpots = [];
     bullets = [];
+    monster = null;
+    helicopter = null;
+    
+    // Get current room for this floor
+    const room = rooms.find(r => r.floor === f) || rooms[0];
+    room.visited = true;
+    
+    // Set player position to room center
+    player.x = room.x + room.width/2;
+    player.y = room.y + room.height/2;
     
     // Ghost settings based on difficulty
-    let ghostCount = 4;
-    let ghostSpeed = 1.4; // Increased ghost speed
-    let ghostDamage = 0.3;
+    let ghostCount = 3;
+    let ghostSpeed = 1.5;
+    let ghostDamage = 0.25;
+    let ghostSize = 40; // Bigger ghosts for bigger rooms
     
     switch(gameMode) {
         case 'easy': 
-            ghostCount = 3; 
-            ghostSpeed = 1.0; 
-            ghostDamage = 0.2; 
+            ghostCount = 2; 
+            ghostSpeed = 1.2; 
+            ghostDamage = 0.15; 
+            ghostSize = 35;
             break;
         case 'normal': 
-            ghostCount = 4; 
-            ghostSpeed = 1.4; 
-            ghostDamage = 0.3; 
+            ghostCount = 3; 
+            ghostSpeed = 1.5; 
+            ghostDamage = 0.25; 
+            ghostSize = 40;
             break;
         case 'hard': 
-            ghostCount = 5; 
+            ghostCount = 4; 
             ghostSpeed = 1.8; 
-            ghostDamage = 0.5; 
+            ghostDamage = 0.35; 
+            ghostSize = 45;
             break;
         case 'impossible': 
-            ghostCount = 6; 
-            ghostSpeed = 2.2; 
-            ghostDamage = 0.8; 
+            ghostCount = 5; 
+            ghostSpeed = 2.1; 
+            ghostDamage = 0.45; 
+            ghostSize = 50;
             break;
     }
     
     // Create ghosts
     for (let i = 0; i < ghostCount; i++) {
         ghosts.push({
-            x: 100 + Math.random()*(width-200),
-            y: 100 + Math.random()*(height-200),
+            x: room.x + 100 + Math.random()*(room.width-200),
+            y: room.y + 100 + Math.random()*(room.height-200),
             speed: ghostSpeed + Math.random()*0.5,
             damage: ghostDamage,
-            size: 30,
+            size: ghostSize,
             wandering: false,
             wanderTargetX: 0,
             wanderTargetY: 0
         });
     }
     
-    // Puzzle - check which reward to give based on puzzles solved
-    const rewardIndex = puzzlesSolved % puzzleRewards.length;
-    const reward = puzzleRewards[rewardIndex];
+    // Create puzzles (2 per floor for floors 1-10)
+    if (f <= 10) {
+        for (let i = 0; i < 2; i++) {
+            puzzles.push({
+                x: room.x + 150 + (i * 400),
+                y: room.y + room.height/2,
+                solved: false,
+                floor: f,
+                index: i
+            });
+        }
+    }
     
-    puzzle = {
-        x: width/2,
-        y: height/2,
-        solved: false,
-        rewardType: reward.type,
-        rewardAmount: reward.amount || 1
-    };
+    // Special room 11 (car room)
+    if (f === 11) {
+        carRoom = {x: room.x + room.width/2, y: room.y + room.height/2};
+        garageDoor = {x: room.x + room.width/2, y: room.y + 120};
+        monster = {
+            x: room.x + room.width/2,
+            y: room.y + 200,
+            hp: 1500, // More HP for bigger room
+            size: 100, // Bigger monster
+            speed: 0.9
+        };
+        
+        // Add some extra hiding spots in car room
+        hidingSpots.push(
+            {x: room.x + 150, y: room.y + 150},
+            {x: room.x + room.width - 150, y: room.y + 150},
+            {x: room.x + 150, y: room.y + room.height - 150},
+            {x: room.x + room.width - 150, y: room.y + room.height - 150}
+        );
+    }
     
-    // Elevator and stairs
-    elevator = {x: width/2, y: height-100};
-    if (f > 1) stairsDown = {x: 70, y: height/2, to: f-1};
-    if (f < 10) stairsUp = {x: width-70, y: height/2, to: f+1};
-    if (f === 10) exitDoor = {x: width/2, y: 90};
+    // Basement (floor 1) - dark with rope
+    if (f === 1) {
+        // Rope in basement - bigger
+        puzzles.push({
+            x: room.x + room.width - 200,
+            y: room.y + 150,
+            solved: false,
+            floor: f,
+            index: 2,
+            special: 'rope'
+        });
+        
+        // Turn on torch automatically in basement
+        torchOn = true;
+        document.getElementById('torch').style.opacity = 1;
+        document.getElementById('flashlightBtn').style.background = 'rgba(100,100,0,0.9)';
+        document.getElementById('flashlightBtn').style.borderColor = '#ff0';
+        
+        // Basement is extra dark
+        document.getElementById('torch').style.background = 
+            'radial-gradient(circle 400px at var(--x,50%) var(--y,50%), ' +
+            'rgba(200, 160, 100, 0.7) 0%, ' +
+            'rgba(120, 80, 40, 0.5) 20%, ' +
+            'rgba(0, 0, 0, 0.95) 80%)';
+    }
     
-    // Hiding spots
-    hidingSpots = [
-        {x: 70, y: 90},
-        {x: 70, y: height-90},
-        {x: width-70, y: 90},
-        {x: width-70, y: height-90}
-    ];
+    // Floor 10 - garage key
+    if (f === 10) {
+        puzzles.push({
+            x: room.x + room.width/2,
+            y: room.y + room.height/2,
+            solved: false,
+            floor: f,
+            index: 0,
+            special: 'garage_key'
+        });
+    }
+    
+    // Rooftop (floor 12) - helicopter
+    if (f === 12) {
+        helicopter = {x: room.x + room.width/2, y: room.y + room.height/2 - 150};
+        // Oil can and duct tape spawn points
+        puzzles.push({
+            x: helicopter.x - 200,
+            y: helicopter.y,
+            solved: false,
+            floor: f,
+            index: 0,
+            special: 'oil_can'
+        });
+        puzzles.push({
+            x: helicopter.x + 200,
+            y: helicopter.y,
+            solved: false,
+            floor: f,
+            index: 1,
+            special: 'duct_tape'
+        });
+    }
+    
+    // Elevator and stairs - positioned properly in big rooms
+    elevator = {x: room.x + room.width/2, y: room.y + room.height - 120};
+    if (f > 1) stairsDown = {x: room.x + 100, y: room.y + room.height/2, to: f-1};
+    if (f < 12) stairsUp = {x: room.x + room.width - 100, y: room.y + room.height/2, to: f+1};
+    
+    // More hiding spots in big rooms
+    hidingSpots.push(
+        {x: room.x + 100, y: room.y + 100},
+        {x: room.x + 100, y: room.y + room.height - 100},
+        {x: room.x + room.width - 100, y: room.y + 100},
+        {x: room.x + room.width - 100, y: room.y + room.height - 100},
+        {x: room.x + room.width/2, y: room.y + 100},
+        {x: room.x + room.width/2, y: room.y + room.height - 100}
+    );
     
     updateFloorIndicator();
     updateUI();
+    updateHideStatus();
+    updateMiniMap();
 }
 
 function updateUI() {
     document.getElementById('healthFill').style.width = player.hp + '%';
     document.getElementById('healthText').textContent = 
-        `HP: ${Math.floor(player.hp)} | KEYS: ${player.keys}/5 | BULLETS: ${player.bullets}`;
+        `HP: ${Math.floor(player.hp)} | KEYS: ${player.keys}/5 | CAR PARTS: ${player.carParts}/10 | BULLETS: ${player.bullets}`;
 }
 
 function updateFloorIndicator() {
-    document.getElementById('floorIndicator').textContent = `FLOOR: ${floor}`;
+    let floorName = "FLOOR: " + floor;
+    if (floor === 1) floorName = "FLOOR: 1 (BASEMENT - DARK)";
+    else if (floor === 11) floorName = "FLOOR: 11 (CAR & MONSTER)";
+    else if (floor === 12) floorName = "FLOOR: 12 (ROOFTOP)";
+    document.getElementById('floorIndicator').textContent = floorName;
 }
 
 // ============================================
-// GAME LOOP
+// MINIMAP
+// ============================================
+function updateMiniMap() {
+    miniMapCtx.clearRect(0, 0, miniMapCanvas.width, miniMapCanvas.height);
+    
+    // Draw rooms
+    rooms.forEach(room => {
+        // Convert world coordinates to minimap coordinates
+        const mapX = (room.x / WORLD_WIDTH) * miniMapCanvas.width;
+        const mapY = (room.y / WORLD_HEIGHT) * miniMapCanvas.height;
+        const mapWidth = (room.width / WORLD_WIDTH) * miniMapCanvas.width;
+        const mapHeight = (room.height / WORLD_HEIGHT) * miniMapCanvas.height;
+        
+        // Draw room
+        miniMapCtx.fillStyle = room.visited ? (room.floor === floor ? '#ff0' : '#666') : '#333';
+        miniMapCtx.fillRect(mapX, mapY, mapWidth, mapHeight);
+        
+        // Draw room border
+        miniMapCtx.strokeStyle = room.visited ? '#fff' : '#555';
+        miniMapCtx.lineWidth = 1;
+        miniMapCtx.strokeRect(mapX, mapY, mapWidth, mapHeight);
+        
+        // Draw floor number
+        if (room.visited) {
+            miniMapCtx.fillStyle = '#fff';
+            miniMapCtx.font = '8px Courier New';
+            miniMapCtx.textAlign = 'center';
+            miniMapCtx.fillText(room.floor.toString(), mapX + mapWidth/2, mapY + mapHeight/2 + 3);
+        }
+    });
+    
+    // Draw player on minimap
+    const playerMapX = (player.x / WORLD_WIDTH) * miniMapCanvas.width;
+    const playerMapY = (player.y / WORLD_HEIGHT) * miniMapCanvas.height;
+    
+    miniMapCtx.fillStyle = player.hidden ? '#0f0' : '#f00';
+    miniMapCtx.beginPath();
+    miniMapCtx.arc(playerMapX, playerMapY, 4, 0, Math.PI * 2);
+    miniMapCtx.fill();
+    
+    // Draw player direction indicator
+    if (player.vx !== 0 || player.vy !== 0) {
+        const angle = Math.atan2(player.vy, player.vx);
+        const arrowX = playerMapX + Math.cos(angle) * 8;
+        const arrowY = playerMapY + Math.sin(angle) * 8;
+        
+        miniMapCtx.strokeStyle = '#fff';
+        miniMapCtx.lineWidth = 1;
+        miniMapCtx.beginPath();
+        miniMapCtx.moveTo(playerMapX, playerMapY);
+        miniMapCtx.lineTo(arrowX, arrowY);
+        miniMapCtx.stroke();
+    }
+    
+    // Draw ghosts on minimap
+    ghosts.forEach(ghost => {
+        const ghostMapX = (ghost.x / WORLD_WIDTH) * miniMapCanvas.width;
+        const ghostMapY = (ghost.y / WORLD_HEIGHT) * miniMapCanvas.height;
+        
+        miniMapCtx.fillStyle = '#f0f';
+        miniMapCtx.beginPath();
+        miniMapCtx.arc(ghostMapX, ghostMapY, 3, 0, Math.PI * 2);
+        miniMapCtx.fill();
+    });
+    
+    // Draw monster on minimap
+    if (monster) {
+        const monsterMapX = (monster.x / WORLD_WIDTH) * miniMapCanvas.width;
+        const monsterMapY = (monster.y / WORLD_HEIGHT) * miniMapCanvas.height;
+        
+        miniMapCtx.fillStyle = '#800';
+        miniMapCtx.beginPath();
+        miniMapCtx.arc(monsterMapX, monsterMapY, 6, 0, Math.PI * 2);
+        miniMapCtx.fill();
+    }
+}
+
+// ============================================
+// GAME LOOP - BORO ROOMS
 // ============================================
 function gameLoop() {
     if (!gameRunning) return;
     
     try {
-        // Clear canvas
-        ctx.fillStyle = '#0a0a0a';
-        ctx.fillRect(0, 0, width, height);
+        // Update camera
+        updateCamera();
         
-        // Draw walls
-        ctx.fillStyle = '#1a1a1a';
-        ctx.fillRect(0, 0, width, 50);
-        ctx.fillRect(0, height-50, width, 50);
-        ctx.fillRect(0, 0, 50, height);
-        ctx.fillRect(width-50, 0, 50, height);
+        // Clear canvas with appropriate color
+        if (floor === 1) {
+            ctx.fillStyle = '#030303'; // Extra dark for basement
+        } else {
+            ctx.fillStyle = '#080808';
+        }
+        ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
         
-        // Player movement (only if not hidden)
+        // Get current room
+        const currentRoom = rooms.find(r => r.floor === floor);
+        if (currentRoom) {
+            // Draw room background with texture
+            ctx.fillStyle = '#151515';
+            ctx.fillRect(currentRoom.x, currentRoom.y, currentRoom.width, currentRoom.height);
+            
+            // Draw room walls - thicker for big rooms
+            ctx.fillStyle = '#2a2a2a';
+            ctx.fillRect(currentRoom.x, currentRoom.y, currentRoom.width, 30); // Top
+            ctx.fillRect(currentRoom.x, currentRoom.y + currentRoom.height - 30, currentRoom.width, 30); // Bottom
+            ctx.fillRect(currentRoom.x, currentRoom.y, 30, currentRoom.height); // Left
+            ctx.fillRect(currentRoom.x + currentRoom.width - 30, currentRoom.y, 30, currentRoom.height); // Right
+            
+            // Draw wall details
+            ctx.fillStyle = '#3a3a3a';
+            // Vertical stripes on walls
+            for (let i = 0; i < 5; i++) {
+                const stripeX = currentRoom.x + 30 + i * 150;
+                ctx.fillRect(stripeX, currentRoom.y, 5, 30);
+                ctx.fillRect(stripeX, currentRoom.y + currentRoom.height - 30, 5, 30);
+            }
+            
+            // Horizontal stripes on side walls
+            for (let i = 0; i < 4; i++) {
+                const stripeY = currentRoom.y + 30 + i * 140;
+                ctx.fillRect(currentRoom.x, stripeY, 30, 5);
+                ctx.fillRect(currentRoom.x + currentRoom.width - 30, stripeY, 30, 5);
+            }
+        }
+        
+        // Player movement
         if (!player.hidden) {
             if (joystickActive) {
                 const moveX = joystickX / JOYSTICK_RADIUS;
@@ -1397,16 +2119,32 @@ function gameLoop() {
                 player.vx = moveX * player.speed;
                 player.vy = moveY * player.speed;
             } else {
-                player.vx *= 0.8;
-                player.vy *= 0.8;
+                player.vx *= 0.7; // More slippery for big rooms
+                player.vy *= 0.7;
             }
             
             player.x += player.vx;
             player.y += player.vy;
             
-            // Keep player in bounds
-            player.x = Math.max(60, Math.min(width-60, player.x));
-            player.y = Math.max(60, Math.min(height-60, player.y));
+            // Keep player in current room bounds
+            if (currentRoom) {
+                player.x = Math.max(currentRoom.x + 50, Math.min(currentRoom.x + currentRoom.width - 50, player.x));
+                player.y = Math.max(currentRoom.y + 50, Math.min(currentRoom.y + currentRoom.height - 50, player.y));
+            }
+        }
+        
+        // Torch battery consumption
+        if (torchOn && battery > 0) {
+            battery -= 0.03; // Slower consumption
+            updateBatteryDisplay();
+            
+            if (battery <= 0) {
+                battery = 0;
+                torchOn = false;
+                document.getElementById('torch').style.opacity = 0;
+                document.getElementById('flashlightBtn').style.background = 'rgba(40,40,0,0.6)';
+                document.getElementById('flashlightBtn').style.borderColor = '#cc0';
+            }
         }
         
         // Draw bullets
@@ -1416,48 +2154,32 @@ function gameLoop() {
             const dy = b.ty - b.y;
             const dist = Math.hypot(dx, dy);
             
-            if (dist < 15 || b.life-- <= 0) {
+            if (dist < 20 || b.life-- <= 0) {
                 bullets.splice(i, 1);
                 continue;
             }
             
-            b.x += dx/dist * 22;
-            b.y += dy/dist * 22;
+            b.x += dx/dist * 25; // Faster bullets
+            b.y += dy/dist * 25;
             
             ctx.strokeStyle = b.blood ? '#f00' : '#ff0';
-            ctx.lineWidth = b.blood ? 3 : 4;
+            ctx.lineWidth = b.blood ? 4 : 6;
             ctx.beginPath();
             ctx.moveTo(b.x, b.y);
-            ctx.lineTo(b.x + dx*0.3, b.y + dy*0.3);
+            ctx.lineTo(b.x + dx*0.2, b.y + dy*0.2);
             ctx.stroke();
             
-            // Glow effect for normal bullets
             if (!b.blood) {
                 ctx.shadowColor = '#ff0';
-                ctx.shadowBlur = 8;
+                ctx.shadowBlur = 15;
                 ctx.stroke();
                 ctx.shadowBlur = 0;
             }
         }
         
-        // Torch effect
-        const torch = document.getElementById('torch');
-        torch.style.opacity = torchOn && battery > 0 ? 1 : 0;
-        if (torchOn && battery > 0) {
-            battery -= 0.04;
-            if (battery <= 0) {
-                torchOn = false;
-                battery = 0;
-            }
-        }
-        
-        // Update torch position
-        torch.style.setProperty('--x', player.x + 'px');
-        torch.style.setProperty('--y', player.y + 'px');
-        
-        // Draw player
+        // Draw player - bigger for big rooms
         const size = player.size;
-        ctx.fillStyle = player.hidden ? '#333' : '#fff';
+        ctx.fillStyle = player.hidden ? '#444' : '#fff';
         ctx.fillRect(player.x - size/2, player.y - size, size, size*2);
         
         // Player details
@@ -1465,50 +2187,53 @@ function gameLoop() {
         ctx.fillRect(player.x - size/3, player.y - size*0.7, size*0.66, size*0.4);
         
         // Arms
-        ctx.fillStyle = player.hidden ? '#222' : '#c66';
-        ctx.fillRect(player.x - size*0.8, player.y, size*0.6, size*0.8);
-        ctx.fillRect(player.x + size*0.2, player.y, size*0.6, size*0.8);
+        ctx.fillStyle = player.hidden ? '#333' : '#c66';
+        ctx.fillRect(player.x - size*0.9, player.y, size*0.7, size*1);
+        ctx.fillRect(player.x + size*0.2, player.y, size*0.7, size*1);
         
         // Check if player is near a hiding spot
         nearHidingSpot = false;
         hidingSpots.forEach(spot => {
             const dist = Math.hypot(spot.x - player.x, spot.y - player.y);
-            if (dist < 60 && !player.hidden) {
+            if (dist < 100 && !player.hidden) { // Bigger range for big rooms
                 nearHidingSpot = true;
             }
         });
         
-        // Update and draw ghosts
+        // Update and draw ghosts - bigger and scarier
         for (const g of ghosts) {
             if (player.hidden) {
-                // If player is hidden, ghosts wander randomly
                 if (g.wandering) {
                     const dx = g.wanderTargetX - g.x;
                     const dy = g.wanderTargetY - g.y;
                     const dist = Math.hypot(dx, dy);
                     
-                    if (dist < 30) {
-                        // Set new random wander target
-                        g.wanderTargetX = g.x + (Math.random()-0.5)*300;
-                        g.wanderTargetY = g.y + (Math.random()-0.5)*300;
+                    if (dist < 50) {
+                        g.wanderTargetX = g.x + (Math.random()-0.5)*400;
+                        g.wanderTargetY = g.y + (Math.random()-0.5)*400;
                     } else {
-                        g.x += dx/dist * (g.speed * 0.5);
-                        g.y += dy/dist * (g.speed * 0.5);
+                        g.x += dx/dist * (g.speed * 0.6);
+                        g.y += dy/dist * (g.speed * 0.6);
                     }
                 }
             } else {
-                // If player is not hidden, ghosts chase player
                 const dx = player.x - g.x;
                 const dy = player.y - g.y;
                 const dist = Math.hypot(dx, dy);
                 
-                if (dist > 25) {
+                if (dist > 40) {
                     g.x += dx/dist * g.speed;
                     g.y += dy/dist * g.speed;
                 }
             }
             
-            // Draw ghost body
+            // Keep ghosts in room
+            if (currentRoom) {
+                g.x = Math.max(currentRoom.x + 60, Math.min(currentRoom.x + currentRoom.width - 60, g.x));
+                g.y = Math.max(currentRoom.y + 60, Math.min(currentRoom.y + currentRoom.height - 60, g.y));
+            }
+            
+            // Draw ghost body - bigger and scarier
             ctx.fillStyle = '#111';
             ctx.beginPath();
             ctx.arc(g.x, g.y, g.size, 0, Math.PI*2);
@@ -1516,29 +2241,36 @@ function gameLoop() {
             
             // Glow effect
             ctx.shadowColor = '#f00';
-            ctx.shadowBlur = 12;
+            ctx.shadowBlur = 20;
             ctx.fill();
             ctx.shadowBlur = 0;
             
-            // Eyes
-            ctx.fillStyle = '#300';
+            // Eyes - bigger
+            ctx.fillStyle = '#400';
             ctx.beginPath();
-            ctx.arc(g.x - 10, g.y - 8, 6, 0, Math.PI*2);
+            ctx.arc(g.x - 15, g.y - 12, 8, 0, Math.PI*2);
             ctx.fill();
             ctx.beginPath();
-            ctx.arc(g.x + 10, g.y - 8, 6, 0, Math.PI*2);
+            ctx.arc(g.x + 15, g.y - 12, 8, 0, Math.PI*2);
             ctx.fill();
             
             // Pupils
             ctx.fillStyle = '#f00';
             ctx.beginPath();
-            ctx.arc(g.x - 10, g.y - 8, 3, 0, Math.PI*2);
+            ctx.arc(g.x - 15, g.y - 12, 4, 0, Math.PI*2);
             ctx.fill();
             ctx.beginPath();
-            ctx.arc(g.x + 10, g.y - 8, 3, 0, Math.PI*2);
+            ctx.arc(g.x + 15, g.y - 12, 4, 0, Math.PI*2);
             ctx.fill();
             
-            // Damage player (only if not hidden)
+            // Mouth
+            ctx.strokeStyle = '#f00';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(g.x, g.y + 10, 15, 0.2, Math.PI - 0.2);
+            ctx.stroke();
+            
+            // Damage player
             if (Math.hypot(g.x - player.x, g.y - player.y) < size + g.size && !player.hidden) {
                 player.hp -= g.damage;
                 document.getElementById('blood').style.opacity = 1;
@@ -1555,152 +2287,376 @@ function gameLoop() {
             }
         }
         
-        // Draw hiding spots
+        // Draw hiding spots - bigger cabinets
         hidingSpots.forEach(s => {
             const isCurrentHidingSpot = player.hidingSpot && s.x === player.hidingSpot.x && s.y === player.hidingSpot.y;
-            ctx.fillStyle = isCurrentHidingSpot ? '#003300' : '#222';
-            ctx.fillRect(s.x - 40, s.y - 50, 80, 100);
+            ctx.fillStyle = isCurrentHidingSpot ? '#002200' : '#333';
+            ctx.fillRect(s.x - 60, s.y - 70, 120, 140);
             
-            // Cabinet doors
-            ctx.fillStyle = isCurrentHidingSpot ? '#112211' : '#433';
-            ctx.fillRect(s.x - 32, s.y - 40, 28, 80);
-            ctx.fillRect(s.x + 4, s.y - 40, 28, 80);
+            ctx.fillStyle = isCurrentHidingSpot ? '#113311' : '#555';
+            ctx.fillRect(s.x - 48, s.y - 50, 48, 100);
+            ctx.fillRect(s.x, s.y - 50, 48, 100);
             
-            // Label
-            ctx.fillStyle = '#0f0';
-            ctx.font = '12px "Courier New"';
-            ctx.textAlign = 'center';
-            ctx.fillText("HIDE", s.x, s.y);
-        });
-        
-        // Draw puzzle
-        if (puzzle) {
-            const color = puzzle.solved ? '#0f0' : '#ff0';
-            ctx.fillStyle = color;
-            ctx.fillRect(puzzle.x - 40, puzzle.y - 40, 80, 80);
-            ctx.fillStyle = '#000';
-            ctx.fillRect(puzzle.x - 28, puzzle.y - 28, 56, 56);
-            ctx.fillStyle = '#fff';
+            ctx.fillStyle = isCurrentHidingSpot ? '#0f0' : '#8f8';
             ctx.font = 'bold 16px "Courier New"';
             ctx.textAlign = 'center';
+            ctx.fillText("HIDE", s.x, s.y);
             
-            let rewardText = "";
-            if (puzzle.rewardType === 'key') rewardText = "KEY";
-            else if (puzzle.rewardType === 'battery') rewardText = "BATTERY";
-            else if (puzzle.rewardType === 'bullets') rewardText = "BULLETS";
-            
-            ctx.fillText(puzzle.solved ? "SOLVED" : rewardText, puzzle.x, puzzle.y + 5);
-            
-            // Glow effect
-            ctx.shadowColor = color;
-            ctx.shadowBlur = 15;
-            ctx.fillRect(puzzle.x - 40, puzzle.y - 40, 80, 80);
-            ctx.shadowBlur = 0;
-        }
+            // Draw handles
+            ctx.fillStyle = '#aaa';
+            ctx.fillRect(s.x - 40, s.y - 20, 10, 5);
+            ctx.fillRect(s.x + 30, s.y - 20, 10, 5);
+            ctx.fillRect(s.x - 40, s.y + 15, 10, 5);
+            ctx.fillRect(s.x + 30, s.y + 15, 10, 5);
+        });
         
-        // Draw elevator
-        if (elevator) {
-            ctx.fillStyle = '#333';
-            ctx.fillRect(elevator.x - 50, elevator.y - 50, 100, 100);
-            ctx.fillStyle = '#0ff';
+        // Draw puzzles - bigger
+        puzzles.forEach(p => {
+            if (p.solved) return;
+            
+            let color = '#0ff';
+            let puzzleText = "PUZZLE";
+            
+            if (p.special === 'rope') {
+                color = '#ff8800';
+                puzzleText = "ROPE";
+            } else if (p.special === 'garage_key') {
+                color = '#ff0';
+                puzzleText = "GARAGE KEY";
+            } else if (p.special === 'oil_can') {
+                color = '#a0a0ff';
+                puzzleText = "OIL CAN";
+            } else if (p.special === 'duct_tape') {
+                color = '#ffffa0';
+                puzzleText = "DUCT TAPE";
+            }
+            
+            ctx.fillStyle = color;
+            ctx.fillRect(p.x - 60, p.y - 60, 120, 120);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(p.x - 40, p.y - 40, 80, 80);
+            ctx.fillStyle = '#fff';
             ctx.font = 'bold 18px "Courier New"';
             ctx.textAlign = 'center';
-            ctx.fillText("LIFT", elevator.x, elevator.y - 12);
+            
+            ctx.fillText(puzzleText, p.x, p.y + 5);
+            
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 25;
+            ctx.fillRect(p.x - 60, p.y - 60, 120, 120);
+            ctx.shadowBlur = 0;
+        });
+        
+        // Draw elevator - bigger
+        if (elevator) {
+            ctx.fillStyle = '#444';
+            ctx.fillRect(elevator.x - 80, elevator.y - 80, 160, 160);
+            ctx.fillStyle = '#0ff';
+            ctx.font = 'bold 24px "Courier New"';
+            ctx.textAlign = 'center';
+            ctx.fillText("LIFT", elevator.x, elevator.y - 20);
+            ctx.fillText("A", elevator.x, elevator.y + 20);
+            
+            // Door lines
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(elevator.x - 40, elevator.y - 60);
+            ctx.lineTo(elevator.x - 40, elevator.y + 60);
+            ctx.moveTo(elevator.x + 40, elevator.y - 60);
+            ctx.lineTo(elevator.x + 40, elevator.y + 60);
+            ctx.stroke();
         }
         
-        // Draw stairs
+        // Draw stairs - bigger
         if (stairsDown) {
-            ctx.fillStyle = '#444';
-            ctx.fillRect(stairsDown.x - 35, stairsDown.y - 40, 70, 80);
+            ctx.fillStyle = '#555';
+            ctx.fillRect(stairsDown.x - 50, stairsDown.y - 60, 100, 120);
             ctx.fillStyle = '#fff';
-            ctx.font = 'bold 22px "Courier New"';
+            ctx.font = 'bold 28px "Courier New"';
             ctx.textAlign = 'center';
-            ctx.fillText("DN", stairsDown.x, stairsDown.y + 6);
+            ctx.fillText("↓", stairsDown.x, stairsDown.y + 10);
+            ctx.font = 'bold 16px "Courier New"';
+            ctx.fillText("TO " + stairsDown.to, stairsDown.x, stairsDown.y + 40);
         }
         
         if (stairsUp) {
-            ctx.fillStyle = '#444';
-            ctx.fillRect(stairsUp.x - 35, stairsUp.y - 40, 70, 80);
+            ctx.fillStyle = '#555';
+            ctx.fillRect(stairsUp.x - 50, stairsUp.y - 60, 100, 120);
             ctx.fillStyle = '#fff';
-            ctx.font = 'bold 22px "Courier New"';
+            ctx.font = 'bold 28px "Courier New"';
             ctx.textAlign = 'center';
-            ctx.fillText("UP", stairsUp.x, stairsUp.y + 6);
+            ctx.fillText("↑", stairsUp.x, stairsUp.y + 10);
+            ctx.font = 'bold 16px "Courier New"';
+            ctx.fillText("TO " + stairsUp.to, stairsUp.x, stairsUp.y + 40);
         }
         
-        // Draw exit door
-        if (exitDoor) {
-            if (player.keys >= 5) {
-                ctx.fillStyle = '#c00';
-                ctx.fillRect(exitDoor.x - 70, exitDoor.y - 80, 140, 160);
+        // Draw car room - bigger
+        if (carRoom) {
+            // Garage floor
+            ctx.fillStyle = '#333';
+            ctx.fillRect(carRoom.x - 200, carRoom.y - 120, 400, 240);
+            
+            // Car - bigger
+            ctx.fillStyle = player.carParts >= 10 ? '#00aa00' : '#aa0000';
+            ctx.fillRect(carRoom.x - 120, carRoom.y - 60, 240, 120);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(carRoom.x - 90, carRoom.y - 40, 180, 80);
+            
+            // Windows
+            ctx.fillStyle = '#0af';
+            ctx.fillRect(carRoom.x - 80, carRoom.y - 30, 60, 30);
+            ctx.fillRect(carRoom.x + 20, carRoom.y - 30, 60, 30);
+            
+            // Wheels
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(carRoom.x - 100, carRoom.y + 40, 20, 0, Math.PI*2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(carRoom.x + 100, carRoom.y + 40, 20, 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 24px "Courier New"';
+            ctx.textAlign = 'center';
+            ctx.fillText("CAR", carRoom.x, carRoom.y - 90);
+            ctx.fillText(`${player.carParts}/10 PARTS`, carRoom.x, carRoom.y + 90);
+        }
+        
+        // Draw garage door - bigger
+        if (garageDoor) {
+            if (player.carParts >= 10) {
+                ctx.fillStyle = '#008800';
+                ctx.fillRect(garageDoor.x - 150, garageDoor.y - 100, 300, 200);
                 ctx.fillStyle = '#000';
-                ctx.fillRect(exitDoor.x - 50, exitDoor.y - 40, 100, 80);
+                ctx.fillRect(garageDoor.x - 100, garageDoor.y - 50, 200, 100);
                 
-                // Animated effect
-                const time = Date.now() * 0.005;
-                for (let i = 0; i < 10; i++) {
-                    const a = time + i * 0.3;
-                    ctx.strokeStyle = '#f00';
-                    ctx.lineWidth = 2;
+                // Animated effect - more particles
+                const time = Date.now() * 0.003;
+                for (let i = 0; i < 15; i++) {
+                    const a = time + i * 0.2;
+                    ctx.strokeStyle = '#0f0';
+                    ctx.lineWidth = 3;
                     ctx.beginPath();
-                    ctx.arc(exitDoor.x, exitDoor.y, 40 + i * 7, a, a + 2.0);
+                    ctx.arc(garageDoor.x, garageDoor.y, 50 + i * 10, a, a + 1.5);
                     ctx.stroke();
                 }
                 
                 ctx.fillStyle = '#fff';
-                ctx.font = 'bold 26px "Courier New"';
+                ctx.font = 'bold 32px "Courier New"';
                 ctx.textAlign = 'center';
-                ctx.fillText("EXIT", exitDoor.x, exitDoor.y + 8);
+                ctx.fillText("GARAGE", garageDoor.x, garageDoor.y - 10);
+                ctx.fillText("EXIT", garageDoor.x, garageDoor.y + 35);
             } else {
                 ctx.fillStyle = '#400';
-                ctx.fillRect(exitDoor.x - 70, exitDoor.y - 80, 140, 160);
-                ctx.fillStyle = '#822';
-                ctx.font = 'bold 20px "Courier New"';
+                ctx.fillRect(garageDoor.x - 150, garageDoor.y - 100, 300, 200);
+                ctx.fillStyle = '#a22';
+                ctx.font = 'bold 24px "Courier New"';
                 ctx.textAlign = 'center';
-                ctx.fillText("LOCKED", exitDoor.x, exitDoor.y + 8);
+                ctx.fillText("LOCKED", garageDoor.x, garageDoor.y - 20);
+                ctx.fillText(`${player.carParts}/10 PARTS`, garageDoor.x, garageDoor.y + 30);
             }
+        }
+        
+        // Draw monster - scarier and bigger
+        if (monster) {
+            // Body
+            ctx.fillStyle = '#8b0000';
+            ctx.beginPath();
+            ctx.arc(monster.x, monster.y, monster.size, 0, Math.PI*2);
+            ctx.fill();
+            
+            // Spikes
+            ctx.strokeStyle = '#600';
+            ctx.lineWidth = 5;
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const spikeLength = 30 + Math.sin(Date.now() * 0.005 + i) * 10;
+                const x1 = monster.x + Math.cos(angle) * monster.size;
+                const y1 = monster.y + Math.sin(angle) * monster.size;
+                const x2 = monster.x + Math.cos(angle) * (monster.size + spikeLength);
+                const y2 = monster.y + Math.sin(angle) * (monster.size + spikeLength);
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+            
+            // Monster eyes - glowing
+            ctx.fillStyle = '#300';
+            ctx.beginPath();
+            ctx.arc(monster.x - 35, monster.y - 30, 15, 0, Math.PI*2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(monster.x + 35, monster.y - 30, 15, 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#f00';
+            ctx.beginPath();
+            ctx.arc(monster.x - 35, monster.y - 30, 8, 0, Math.PI*2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(monster.x + 35, monster.y - 30, 8, 0, Math.PI*2);
+            ctx.fill();
+            
+            // Mouth
+            ctx.strokeStyle = '#f00';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.arc(monster.x, monster.y + 20, 30, 0.3, Math.PI - 0.3);
+            ctx.stroke();
+            
+            // Monster health bar - bigger
+            ctx.fillStyle = '#333';
+            ctx.fillRect(monster.x - 75, monster.y - monster.size - 40, 150, 15);
+            ctx.fillStyle = '#f00';
+            ctx.fillRect(monster.x - 75, monster.y - monster.size - 40, (monster.hp/1500)*150, 15);
+            
+            // Health text
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 14px "Courier New"';
+            ctx.textAlign = 'center';
+            ctx.fillText(`MONSTER: ${Math.floor(monster.hp)}/1500`, monster.x, monster.y - monster.size - 50);
+            
+            // Monster chases player
+            if (!player.hidden) {
+                const dx = player.x - monster.x;
+                const dy = player.y - monster.y;
+                const dist = Math.hypot(dx, dy);
+                
+                if (dist > 80) {
+                    monster.x += dx/dist * monster.speed;
+                    monster.y += dy/dist * monster.speed;
+                }
+                
+                // Monster damage
+                if (dist < monster.size + player.size) {
+                    player.hp -= 2;
+                    if (player.hp <= 0) gameOver();
+                    updateUI();
+                }
+            }
+        }
+        
+        // Draw helicopter - bigger and better
+        if (helicopter) {
+            // Body
+            ctx.fillStyle = '#666';
+            ctx.fillRect(helicopter.x - 90, helicopter.y - 40, 180, 80);
+            ctx.fillStyle = '#444';
+            ctx.fillRect(helicopter.x - 70, helicopter.y - 30, 140, 60);
+            
+            // Windows
+            ctx.fillStyle = '#0af';
+            ctx.fillRect(helicopter.x - 60, helicopter.y - 20, 120, 40);
+            
+            // Rotor - animated
+            const time = Date.now() * 0.008;
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            for (let i = 0; i < 4; i++) {
+                const angle = time + i * (Math.PI * 2 / 4);
+                const x1 = helicopter.x + Math.cos(angle) * 70;
+                const y1 = helicopter.y - 60 + Math.sin(angle) * 70;
+                const x2 = helicopter.x + Math.cos(angle + Math.PI) * 70;
+                const y2 = helicopter.y - 60 + Math.sin(angle + Math.PI) * 70;
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+            }
+            ctx.stroke();
+            
+            // Landing gear
+            ctx.fillStyle = '#333';
+            ctx.fillRect(helicopter.x - 100, helicopter.y + 30, 20, 15);
+            ctx.fillRect(helicopter.x + 80, helicopter.y + 30, 20, 15);
+            
+            ctx.fillStyle = '#0ff';
+            ctx.font = 'bold 20px "Courier New"';
+            ctx.textAlign = 'center';
+            ctx.fillText("HELICOPTER", helicopter.x, helicopter.y + 60);
         }
         
         // Show prompts
         const prompt = document.getElementById('prompt');
         prompt.style.display = 'none';
         
-        if (elevator && Math.hypot(elevator.x - player.x, elevator.y - player.y) < 80) {
-            prompt.textContent = "A → LIFT";
+        // Position prompt above player
+        const promptX = player.x - cameraX;
+        const promptY = player.y - cameraY - 80;
+        prompt.style.left = promptX + 'px';
+        prompt.style.top = promptY + 'px';
+        
+        if (elevator && Math.hypot(elevator.x - player.x, elevator.y - player.y) < 120) {
+            prompt.textContent = "A → RANDOM FLOOR";
             prompt.style.display = 'block';
-        } else if (stairsDown && Math.hypot(stairsDown.x - player.x, stairsDown.y - player.y) < 55) {
-            prompt.textContent = "A → DOWN";
+        } else if (stairsDown && Math.hypot(stairsDown.x - player.x, stairsDown.y - player.y) < 90) {
+            prompt.textContent = "A → GO DOWN";
             prompt.style.display = 'block';
-        } else if (stairsUp && Math.hypot(stairsUp.x - player.x, stairsUp.y - player.y) < 55) {
-            prompt.textContent = "A → UP";
+        } else if (stairsUp && Math.hypot(stairsUp.x - player.x, stairsUp.y - player.y) < 90) {
+            prompt.textContent = "A → GO UP";
             prompt.style.display = 'block';
         } else if (nearHidingSpot && !player.hidden) {
-            prompt.textContent = "A → HIDE";
+            prompt.textContent = "A → HIDE IN CABINET";
             prompt.style.display = 'block';
         } else if (player.hidden) {
             prompt.textContent = "A → COME OUT";
             prompt.style.display = 'block';
-        } else if (puzzle && !puzzle.solved && Math.hypot(puzzle.x - player.x, puzzle.y - player.y) < 65) {
-            prompt.textContent = "A → PUZZLE";
-            prompt.style.display = 'block';
-        } else if (exitDoor && player.keys >= 5 && Math.hypot(exitDoor.x - player.x, exitDoor.y - player.y) < 90) {
-            prompt.textContent = "A → ESCAPE!";
+        } else {
+            // Check puzzle prompts
+            for (let puzzle of puzzles) {
+                if (!puzzle.solved && Math.hypot(puzzle.x - player.x, puzzle.y - player.y) < 100) {
+                    let action = "SOLVE";
+                    if (puzzle.special === 'rope') action = "TAKE ROPE";
+                    else if (puzzle.special === 'garage_key') action = "TAKE KEY";
+                    else if (puzzle.special === 'oil_can') action = "TAKE OIL CAN";
+                    else if (puzzle.special === 'duct_tape') action = "TAKE DUCT TAPE";
+                    
+                    prompt.textContent = `A → ${action}`;
+                    prompt.style.display = 'block';
+                    break;
+                }
+            }
+        }
+        
+        if (carRoom && Math.hypot(carRoom.x - player.x, carRoom.y - player.y) < 160) {
+            if (monster) {
+                prompt.textContent = "A → FIGHT MONSTER";
+            } else if (!player.helicopterKey) {
+                prompt.textContent = "A → SEARCH CAR FOR KEY";
+            } else {
+                prompt.textContent = "A → INSPECT CAR";
+            }
             prompt.style.display = 'block';
         }
+        
+        if (garageDoor && player.carParts >= 10 && Math.hypot(garageDoor.x - player.x, garageDoor.y - player.y) < 140) {
+            prompt.textContent = "A → ESCAPE BY CAR!";
+            prompt.style.display = 'block';
+        }
+        
+        if (helicopter && Math.hypot(helicopter.x - player.x, helicopter.y - player.y) < 140) {
+            prompt.textContent = "A → ESCAPE BY HELICOPTER";
+            prompt.style.display = 'block';
+        }
+        
+        // Update minimap
+        updateMiniMap();
         
     } catch (e) {
         console.error("Game loop error:", e);
     }
     
-    // Continue loop
     if (gameRunning) {
         gameLoopId = requestAnimationFrame(gameLoop);
     }
 }
 
 // ============================================
-// MODAL FUNCTIONS - PUZZLE DIFFICULTY BASED ON MODE
+// MODAL FUNCTIONS
 // ============================================
-function openPuzzle() {
+function openPuzzle(puzzle) {
     let questions = [];
     
     // Different puzzle difficulties based on game mode
@@ -1714,7 +2670,9 @@ function openPuzzle() {
                 {q: "8÷2=?", a: "4"},
                 {q: "7+8=?", a: "15"},
                 {q: "12-5=?", a: "7"},
-                {q: "3×4=?", a: "12"}
+                {q: "3×4=?", a: "12"},
+                {q: "6+9=?", a: "15"},
+                {q: "14-7=?", a: "7"}
             ];
             break;
             
@@ -1727,7 +2685,9 @@ function openPuzzle() {
                 {q: "8×8=?", a: "64"},
                 {q: "3×7=?", a: "21"},
                 {q: "14+9=?", a: "23"},
-                {q: "36÷6=?", a: "6"}
+                {q: "36÷6=?", a: "6"},
+                {q: "11×5=?", a: "55"},
+                {q: "45-18=?", a: "27"}
             ];
             break;
             
@@ -1740,7 +2700,9 @@ function openPuzzle() {
                 {q: "9×12=?", a: "108"},
                 {q: "81÷9=?", a: "9"},
                 {q: "34+47=?", a: "81"},
-                {q: "72-36=?", a: "36"}
+                {q: "72-36=?", a: "36"},
+                {q: "14×8=?", a: "112"},
+                {q: "96÷8=?", a: "12"}
             ];
             break;
             
@@ -1753,7 +2715,9 @@ function openPuzzle() {
                 {q: "15×16=?", a: "240"},
                 {q: "196÷14=?", a: "14"},
                 {q: "123+89=?", a: "212"},
-                {q: "200-123=?", a: "77"}
+                {q: "200-123=?", a: "77"},
+                {q: "18×14=?", a: "252"},
+                {q: "225÷15=?", a: "15"}
             ];
             break;
     }
@@ -1763,6 +2727,7 @@ function openPuzzle() {
     document.getElementById('puzzleAnswer').value = '';
     document.getElementById('puzzleModal').style.display = 'flex';
     document.getElementById('puzzleAnswer').focus();
+    window.currentPuzzle = puzzle;
     window.currentAnswer = q.a;
 }
 
@@ -1772,64 +2737,52 @@ function closePuzzle() {
 
 document.getElementById('submitPuzzle').onclick = () => {
     const answer = document.getElementById('puzzleAnswer').value.trim();
+    const puzzle = window.currentPuzzle;
     
     if (answer === window.currentAnswer) {
         puzzle.solved = true;
         puzzlesSolved++;
         closePuzzle();
         
-        // Give rewards based on puzzle type
-        if (puzzle.rewardType === 'key') {
+        // Give rewards
+        if (puzzle.special === 'rope') {
+            showAlert("🧶 Found Rope! Can climb between floors faster");
             player.keys++;
-            showAlert("🎉 KEY FOUND! (" + player.keys + "/5)");
-        } else if (puzzle.rewardType === 'battery') {
-            battery = Math.min(100, battery + puzzle.rewardAmount);
-            showAlert("🔋 +" + puzzle.rewardAmount + "% BATTERY!");
-        } else if (puzzle.rewardType === 'bullets') {
-            player.bullets += puzzle.rewardAmount;
-            showAlert("🔫 +" + puzzle.rewardAmount + " BULLETS!");
+        } else if (puzzle.special === 'garage_key') {
+            showAlert("🔑 Found Garage Key!");
+            player.keys++;
+        } else if (puzzle.special === 'oil_can') {
+            player.oilCan = true;
+            showAlert("🛢️ Found Oil Can for helicopter!");
+            updateInventory();
+        } else if (puzzle.special === 'duct_tape') {
+            player.ductTape = true;
+            showAlert("🎞️ Found Duct Tape for helicopter!");
+            updateInventory();
+        } else {
+            // Normal puzzle rewards
+            if (puzzlesSolved <= 10) {
+                // First 10 puzzles give car parts
+                inventory.car_part++;
+                player.carParts++;
+                showAlert("🔧 Car Part Found! (" + player.carParts + "/10)");
+            } else {
+                // Next 10 puzzles give health, battery, ammo
+                const rewardType = ['health_pack', 'battery_pack', 'ammo'][Math.floor(Math.random() * 3)];
+                inventory[rewardType]++;
+                
+                if (rewardType === 'health_pack') showAlert("❤️ Health Pack Found!");
+                else if (rewardType === 'battery_pack') showAlert("🔋 Battery Pack Found!");
+                else showAlert("🔫 Ammo Found!");
+            }
         }
         
         updateUI();
+        updateInventory();
     } else {
         showAlert("❌ WRONG ANSWER!");
     }
 };
-
-function openLift() {
-    const container = document.getElementById('floorButtons');
-    container.innerHTML = '';
-    
-    for (let i = 1; i <= 10; i++) {
-        const btn = document.createElement('button');
-        btn.className = 'btn';
-        btn.textContent = 'F' + i;
-        btn.style.background = i === floor ? '#c00' : '#800';
-        btn.style.padding = '6px 4px';
-        btn.style.fontSize = i === floor ? '1rem' : '0.9rem';
-        btn.onclick = () => {
-            closeLift();
-            if (i !== floor) changeFloor(i);
-        };
-        container.appendChild(btn);
-    }
-    
-    document.getElementById('liftModal').style.display = 'flex';
-}
-
-function closeLift() {
-    document.getElementById('liftModal').style.display = 'none';
-}
-
-function changeFloor(to) {
-    // Quick fade
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, width, height);
-    
-    setTimeout(() => {
-        initFloor(to);
-    }, 300);
-}
 
 function showAlert(msg) {
     const alert = document.createElement('div');
@@ -1840,60 +2793,88 @@ function showAlert(msg) {
         transform: translateX(-50%);
         background: rgba(100, 0, 0, 0.9);
         color: #ffd0d0;
-        padding: 10px 16px;
-        border-radius: 8px;
-        border: 2px solid #c00;
-        font-size: 1rem;
+        padding: 12px 20px;
+        border-radius: 10px;
+        border: 3px solid #c00;
+        font-size: 1.1rem;
         z-index: 100000;
         text-align: center;
-        max-width: 80%;
-        box-shadow: 0 0 20px #800;
+        max-width: 85%;
+        box-shadow: 0 0 25px #800;
         font-family: 'Courier New', monospace;
-        backdrop-filter: blur(5px);
+        backdrop-filter: blur(10px);
     `;
     alert.textContent = msg;
     document.body.appendChild(alert);
-    setTimeout(() => alert.remove(), 1500);
+    setTimeout(() => alert.remove(), 2000);
+}
+
+function changeFloor(to) {
+    // Fade effect
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+    
+    setTimeout(() => {
+        initFloor(to);
+    }, 400);
 }
 
 function gameOver() {
     gameRunning = false;
     showScreen('gameoverScreen');
     
-    // Play scare sound
     const scare = document.getElementById('scareSound');
     scare.currentTime = 0;
     scare.play().catch(e => console.log("Scare sound error"));
     
-    // Stop music
     document.getElementById('bgm').pause();
 }
 
-function winGame() {
+function winGame(method) {
     gameRunning = false;
+    const winMessage = document.getElementById('winMessage');
+    
+    if (method === 'car') {
+        winMessage.textContent = "You repaired the car and escaped! Freedom at last...";
+        winMessage.style.color = "#0f0";
+    } else {
+        winMessage.textContent = "You escaped by helicopter! You made it out alive!";
+        winMessage.style.color = "#0ff";
+    }
+    
     showScreen('winScreen');
     document.getElementById('bgm').pause();
+}
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+function exitApp() {
+    if (navigator.app && navigator.app.exitApp) {
+        navigator.app.exitApp();
+    } else if (navigator.device && navigator.device.exitApp) {
+        navigator.device.exitApp();
+    } else {
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            window.close();
+            setTimeout(() => {
+                window.location.href = 'about:blank';
+            }, 1000);
+            alert("Tap back button again to exit");
+        }
+    }
 }
 
 // ============================================
 // INITIALIZATION
 // ============================================
 window.addEventListener('resize', () => {
-    width = window.innerWidth;
-    height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-    
-    if (player) {
-        player.x = Math.min(player.x, width - 60);
-        player.y = Math.min(player.y, height - 60);
-    }
-    
-    // Update shoot button position
-    updateShootBtnPosition();
+    VIEWPORT_WIDTH = window.innerWidth;
+    VIEWPORT_HEIGHT = window.innerHeight;
 });
 
-// Prevent touch behaviors
 document.addEventListener('touchmove', function(e) {
     if (e.target === canvas || 
         e.target === joystickArea || 
@@ -1903,17 +2884,14 @@ document.addEventListener('touchmove', function(e) {
     }
 }, { passive: false });
 
-// Prevent context menu
 document.addEventListener('contextmenu', function(e) {
     e.preventDefault();
     return false;
 });
 
-// Handle back button press (Android)
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' || e.key === 'Backspace') {
         e.preventDefault();
-        // If in game screen, go to main menu
         if (document.getElementById('gameScreen').style.display === 'flex') {
             showScreen('startScreen');
         } else {
@@ -1922,9 +2900,9 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// Initialize - Start in fullscreen
+// Initialize
 showScreen('startScreen');
-console.log("CURSED APARTMENT - Single Action Button & Hide System");
+console.log("CURSED APARTMENT - BORO ROOM VERSION Loaded");
 </script>
 </body>
 </html>
