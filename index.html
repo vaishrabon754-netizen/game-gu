@@ -845,14 +845,13 @@
     <h1>CURSED APARTMENT</h1>
     
     <div style="font-size: 0.9rem; text-align: center; margin: 12px; background: rgba(30, 0, 30, 0.6); padding: 12px; border-radius: 8px; border: 1px solid #600060; max-width: 90%;">
-        <div style="color: #a0f0ff; font-weight: bold; margin-bottom: 6px; font-size: 1rem;">🎯 ESCAPE THROUGH CAR OR HELICOPTER!</div>
+        <div style="color: #a0f0ff; font-weight: bold; margin-bottom: 6px; font-size: 1rem;">🎯 3 WAYS TO ESCAPE: CAR, HELICOPTER, MAIN DOOR!</div>
         <div style="margin: 5px 0;"><span style="color: #0f0">JOYSTICK:</span> MOVE</div>
-        <div style="margin: 5px 0;"><span style="color: #f80">🔫 BUTTON:</span> SHOOT (Touch to aim)</div>
-        <div style="margin: 5px 0;"><span style="color: #ff0">A BUTTON:</span> HIDE/INTERACT</div>
-        <div style="margin: 5px 0;"><span style="color: #cc0">🔦 ICON:</span> FLASHLIGHT (FLOOR 1 ONLY)</div>
-        <div style="margin: 5px 0;"><span style="color: #0ff">📦 ICON:</span> INVENTORY (F key items)</div>
-        <div style="margin: 5px 0;"><span style="color: #f0f">❌ ICON:</span> EXIT APP</div>
-        <div style="margin-top: 8px; color: #ff8080; font-size: 0.85rem;">Floor 1 is DARK! Use flashlight to see! Find 5 keys to unlock GARAGE!</div>
+        <div style="margin: 5px 0;"><span style="color: #f80">🔫 BUTTON:</span> SHOOT</div>
+        <div style="margin: 5px 0;"><span style="color: #ff0">A BUTTON:</span> INTERACT/HIDE</div>
+        <div style="margin: 5px 0;"><span style="color: #cc0">🔦 ICON:</span> FLASHLIGHT (FLOOR 1)</div>
+        <div style="margin: 5px 0;"><span style="color: #0ff">📦 ICON:</span> INVENTORY</div>
+        <div style="margin-top: 8px; color: #ff8080; font-size: 0.85rem;">20 Puzzles • Garage on Floor 1 • Rope for Roof • Big Monster!</div>
     </div>
     
     <button class="btn" id="startBtn">SELECT MODE</button>
@@ -870,7 +869,7 @@
 <div id="gameScreen" class="screen"></div>
 
 <div id="winScreen" class="screen">
-    <h1 id="winTitle">YOU ESCAPED!</h1>
+    <h1 id="winTitle">ESCAPE SUCCESS!</h1>
     <p id="winText" style="font-size: 1.3rem; margin: 15px; text-align: center; color: #a0ffa0;"></p>
     <button class="btn" onclick="location.reload()">PLAY AGAIN</button>
 </div>
@@ -962,6 +961,7 @@
 <audio id="scareSound" src="https://assets.codepen.io/605876/jumpscare-scream.mp3"></audio>
 <audio id="footstepSound" src="https://assets.codepen.io/605876/footstep-concrete.mp3"></audio>
 <audio id="engineSound" src="https://assets.codepen.io/605876/car-engine-start.mp3"></audio>
+<audio id="helicopterSound" src="https://assets.codepen.io/605876/helicopter-fly.mp3"></audio>
 
 <script>
 // ============================================
@@ -1071,6 +1071,7 @@ let player = {
     hasHelicopterKey: false,
     hasOil: false,
     hasTape: false,
+    hasRope: false,
     // Walking animation variables
     walkFrame: 0,
     walkTimer: 0,
@@ -1079,57 +1080,68 @@ let player = {
     isMoving: false
 };
 let floor = 1, torchOn = false, battery = 100;
-let ghosts = [], puzzle = null, stairsUp = null, stairsDown = null, elevator = null, exitDoor = null, hidingSpots = [];
+let ghosts = [], puzzles = [], stairsUp = null, stairsDown = null, elevator = null, exitDoor = null, hidingSpots = [];
 let bullets = [], darkMode = false, carHealth = 0, inGarage = false, inHelicopterArea = false, monster = null;
 let gameRunning = false;
 let gameLoopId = null;
 let lastTime = 0;
+let mainDoor = {x: width/2, y: height-100, locked: true};
+let rope = {x: width-100, y: height-150, collected: false};
+let helicopter = {x: width/2, y: 100, active: false};
 
-// Room structure: 11 rooms per floor
-const rooms = [
-    { type: 'puzzle', hasPuzzle: true },
-    { type: 'puzzle', hasPuzzle: true },
-    { type: 'hiding', hasHiding: true },
-    { type: 'empty' },
-    { type: 'hiding', hasHiding: true },
-    { type: 'puzzle', hasPuzzle: true },
-    { type: 'empty' },
-    { type: 'puzzle', hasPuzzle: true },
-    { type: 'hiding', hasHiding: true },
-    { type: 'empty' },
-    { type: 'special' } // Special room (car/stairs on floor 11)
-];
-
-// Puzzle tracking
+// Room structure: 10 floors, 2 puzzles per floor = 20 puzzles
+const floors = 10;
 let puzzlesSolved = 0;
+const totalPuzzles = 20;
+
+// Puzzle rewards - 20 unique items for 20 puzzles
 const puzzleRewards = [
-    { type: 'key' },
-    { type: 'key' },
-    { type: 'key' },
-    { type: 'key' },
-    { type: 'key' },
-    { type: 'carpart' },
-    { type: 'carpart' },
-    { type: 'carpart' },
-    { type: 'carpart' },
-    { type: 'carpart' },
-    { type: 'battery', amount: 50 },
-    { type: 'battery', amount: 50 },
-    { type: 'bullets', amount: 10 },
-    { type: 'bullets', amount: 10 },
-    { type: 'helicopterkey' },
-    { type: 'oil' },
-    { type: 'tape' },
-    { type: 'garagekey' },
-    { type: 'health', amount: 50 },
-    { type: 'health', amount: 50 }
+    // Floor 1 - Garage items
+    { type: 'garagekey', name: 'Garage Key' },
+    { type: 'toolbox', name: 'Toolbox' },
+    
+    // Floor 2 - Car parts
+    { type: 'carpart', name: 'Engine Part' },
+    { type: 'carpart', name: 'Transmission' },
+    
+    // Floor 3 - Helicopter items
+    { type: 'helicopterkey', name: 'Helicopter Key' },
+    { type: 'oil', name: 'Helicopter Oil' },
+    
+    // Floor 4 - More items
+    { type: 'tape', name: 'Duct Tape' },
+    { type: 'rope', name: 'Climbing Rope' },
+    
+    // Floor 5 - Weapons & Health
+    { type: 'bullets', name: 'Ammo Pack', amount: 10 },
+    { type: 'health', name: 'Med Kit', amount: 50 },
+    
+    // Floor 6 - More supplies
+    { type: 'battery', name: 'Flashlight Battery', amount: 50 },
+    { type: 'bullets', name: 'Ammo Pack', amount: 10 },
+    
+    // Floor 7
+    { type: 'health', name: 'Med Kit', amount: 50 },
+    { type: 'carpart', name: 'Wheel' },
+    
+    // Floor 8
+    { type: 'battery', name: 'Flashlight Battery', amount: 50 },
+    { type: 'carpart', name: 'Brake System' },
+    
+    // Floor 9
+    { type: 'health', name: 'Med Kit', amount: 50 },
+    { type: 'bullets', name: 'Ammo Pack', amount: 10 },
+    
+    // Floor 10 - Final items
+    { type: 'maindoorkey', name: 'Main Door Key' },
+    { type: 'health', name: 'Super Med Kit', amount: 100 }
 ];
 
 // Garage items
 let garageItems = [
     { type: 'toolbox', x: 0, y: 0, collected: false },
     { type: 'gasoline', x: 0, y: 0, collected: false },
-    { type: 'battery', x: 0, y: 0, collected: false },
+    { type: 'carbattery', x: 0, y: 0, collected: false },
     { type: 'tire', x: 0, y: 0, collected: false }
 ];
 
@@ -1140,10 +1152,6 @@ let joystickY = 0;
 let joystickStartX = 0;
 let joystickStartY = 0;
 const JOYSTICK_RADIUS = 35;
-
-// Shoot aiming variables
-let shootTouchX = 0;
-let shootTouchY = 0;
 
 // Hide variables
 let nearHidingSpot = false;
@@ -1243,6 +1251,8 @@ function startGame() {
         hasHelicopterKey: false,
         hasOil: false,
         hasTape: false,
+        hasRope: false,
+        hasMainDoorKey: false,
         walkFrame: 0,
         walkTimer: 0,
         lastStepTime: 0,
@@ -1253,7 +1263,7 @@ function startGame() {
     torchOn = false;
     battery = 100;
     ghosts = [];
-    puzzle = null;
+    puzzles = [];
     stairsUp = null;
     stairsDown = null;
     elevator = null;
@@ -1266,12 +1276,15 @@ function startGame() {
     inHelicopterArea = false;
     monster = null;
     puzzlesSolved = 0;
+    mainDoor.locked = true;
+    rope.collected = false;
+    helicopter.active = false;
     
     // Reset garage items
     garageItems = [
         { type: 'toolbox', x: width * 0.3, y: height * 0.7, collected: false },
         { type: 'gasoline', x: width * 0.7, y: height * 0.7, collected: false },
-        { type: 'battery', x: width * 0.3, y: height * 0.3, collected: false },
+        { type: 'carbattery', x: width * 0.3, y: height * 0.3, collected: false },
         { type: 'tire', x: width * 0.7, y: height * 0.3, collected: false }
     ];
     
@@ -1324,12 +1337,15 @@ function openInventory() {
                 case 'oil': icon = '🛢️'; description = 'Engine oil'; break;
                 case 'tape': icon = '📼'; description = 'Duct tape'; break;
                 case 'garagekey': icon = '🚗'; description = 'Garage key'; break;
-                case 'battery': icon = '🔋'; description = 'Extra battery'; break;
+                case 'battery': icon = '🔋'; description = 'Flashlight battery'; break;
                 case 'bullets': icon = '🔫'; description = 'Ammo pack'; break;
                 case 'health': icon = '❤️'; description = 'Health kit'; break;
                 case 'toolbox': icon = '🧰'; description = 'Toolbox'; break;
                 case 'gasoline': icon = '⛽'; description = 'Gasoline can'; break;
+                case 'carbattery': icon = '🔋'; description = 'Car battery'; break;
                 case 'tire': icon = '🛞'; description = 'Spare tire'; break;
+                case 'rope': icon = '🪢'; description = 'Climbing rope'; break;
+                case 'maindoorkey': icon = '🚪'; description = 'Main door key'; break;
             }
             
             itemDiv.innerHTML = `
@@ -1376,22 +1392,33 @@ function useItem(index) {
                 break;
                 
             case 'health':
-                player.hp = Math.min(100, player.hp + 50);
+                player.hp = Math.min(100, player.hp + (item.amount || 50));
                 player.inventory.splice(index, 1);
-                showAlert("❤️ Health restored! +50 HP");
+                showAlert("❤️ Health restored! +" + (item.amount || 50) + " HP");
                 updateUI();
                 break;
                 
             case 'toolbox':
             case 'gasoline':
+            case 'carbattery':
             case 'tire':
                 if (inGarage && carHealth < 100) {
                     carHealth = Math.min(100, carHealth + 25);
                     player.inventory.splice(index, 1);
                     updateCarHealth();
-                    showAlert(`🔧 ${item.type.toUpperCase()} used! Car health: ${carHealth}%`);
+                    showAlert(`🔧 ${item.name || item.type.toUpperCase()} used! Car health: ${carHealth}%`);
                 } else {
                     showAlert("Can only use this in garage on the car!");
+                }
+                break;
+                
+            case 'rope':
+                if (floor === 10 && !player.hasRope) {
+                    player.hasRope = true;
+                    player.inventory.splice(index, 1);
+                    showAlert("🪢 Rope equipped! Go to roof!");
+                } else {
+                    showAlert("Can only use rope on floor 10 to access roof!");
                 }
                 break;
                 
@@ -1477,8 +1504,8 @@ shootBtn.addEventListener('touchstart', function(e) {
     const touch = e.touches[0];
     
     // Store the touch position for aiming
-    shootTouchX = touch.clientX;
-    shootTouchY = touch.clientY;
+    const shootTouchX = touch.clientX;
+    const shootTouchY = touch.clientY;
     
     // Calculate bullet direction
     const bulletDirectionX = shootTouchX - player.x;
@@ -1571,7 +1598,8 @@ function shootBullet(targetX, targetY) {
             
             if (monster.hp <= 0) {
                 monster = null;
-                showAlert("🎉 Monster defeated! Find helicopter puzzle!");
+                showAlert("🎉 Monster defeated! Now use helicopter!");
+                helicopter.active = true;
             }
         }
     }
@@ -1664,15 +1692,18 @@ actionBtn.addEventListener('touchstart', function(e) {
         }, 1500);
     } else {
         // Check for interactions
+        
+        // Check puzzles
+        for (let p of puzzles) {
+            if (!p.solved && Math.hypot(p.x - player.x, p.y - player.y) < 70) {
+                openPuzzle(p);
+                return;
+            }
+        }
+        
         // Check elevator
         if (elevator && Math.hypot(elevator.x - player.x, elevator.y - player.y) < 90) {
             openLift();
-            return;
-        }
-        
-        // Check puzzle
-        if (puzzle && !puzzle.solved && Math.hypot(puzzle.x - player.x, puzzle.y - player.y) < 70) {
-            openPuzzle();
             return;
         }
         
@@ -1687,44 +1718,79 @@ actionBtn.addEventListener('touchstart', function(e) {
             return;
         }
         
-        // Check exit
-        if (exitDoor && Math.hypot(exitDoor.x - player.x, exitDoor.y - player.y) < 100) {
-            if (floor === 10 && player.keys >= 5) {
-                // Go to floor 11 (garage)
-                changeFloor(11);
-            } else if (floor === 11) {
-                // In garage, check for car escape
-                if (player.hasGarageKey && carHealth >= 100) {
-                    carEscape();
-                } else {
-                    showAlert("Need garage key and full car health!");
-                }
+        // Check main door (floor 1)
+        if (floor === 1 && Math.hypot(mainDoor.x - player.x, mainDoor.y - player.y) < 100) {
+            if (player.hasMainDoorKey) {
+                mainDoorEscape();
+            } else {
+                showAlert("🚪 Need main door key!");
             }
             return;
         }
         
-        // Check helicopter area
-        if (inHelicopterArea) {
-            if (monster && monster.hp > 0) {
-                showAlert("💀 Defeat the monster first!");
-            } else if (player.hasHelicopterKey && player.hasOil && player.hasTape) {
+        // Check rope (floor 10)
+        if (floor === 10 && !rope.collected && Math.hypot(rope.x - player.x, rope.y - player.y) < 60) {
+            rope.collected = true;
+            addToInventory({type: 'rope', name: 'Climbing Rope'});
+            showAlert("🪢 Found climbing rope! Use it from inventory on floor 10!");
+            return;
+        }
+        
+        // Check roof access (floor 10 with rope)
+        if (floor === 10 && player.hasRope && Math.hypot(width/2 - player.x, 100 - player.y) < 80) {
+            // Go to roof (floor 11)
+            changeFloor(11);
+            return;
+        }
+        
+        // Check helicopter (roof/floor 11)
+        if (floor === 11 && helicopter.active && Math.hypot(helicopter.x - player.x, helicopter.y - player.y) < 100) {
+            if (player.hasHelicopterKey && player.hasOil && player.hasTape) {
                 helicopterEscape();
             } else {
-                showAlert("Need helicopter key, oil, and tape!");
+                showAlert("Need helicopter key, oil, and duct tape!");
             }
             return;
         }
         
-        // Check car repair
-        if (inGarage && carHealth < 100) {
-            if (player.carParts >= 10) {
-                player.carParts -= 10;
-                carHealth = Math.min(100, carHealth + 20);
-                updateCarHealth();
-                showAlert(`🔧 Car repaired! Health: ${carHealth}%`);
-            } else {
-                showAlert(`Need 10 car parts (have ${player.carParts})`);
+        // Check garage (floor 1 special area)
+        if (floor === 1 && Math.hypot(width-100 - player.x, height/2 - player.y) < 90) {
+            // Enter garage
+            inGarage = true;
+            document.getElementById('carHealthBar').style.display = 'block';
+            carHealth = 30;
+            updateCarHealth();
+            showAlert("🚗 Entered garage! Repair the car to escape!");
+            return;
+        }
+        
+        // Check car repair (in garage)
+        if (inGarage && carHealth < 100 && Math.hypot(width/2 - player.x, height/2 - player.y) < 120) {
+            // Check if player has repair items in inventory
+            let hasRepairItem = false;
+            for (let i = player.inventory.length - 1; i >= 0; i--) {
+                const item = player.inventory[i];
+                if (item.type === 'toolbox' || item.type === 'gasoline' || 
+                    item.type === 'carbattery' || item.type === 'tire') {
+                    carHealth = Math.min(100, carHealth + 25);
+                    player.inventory.splice(i, 1);
+                    updateCarHealth();
+                    showAlert(`🔧 ${item.name} used! Car health: ${carHealth}%`);
+                    hasRepairItem = true;
+                    break;
+                }
             }
+            
+            if (!hasRepairItem) {
+                showAlert("Need repair items (toolbox, gasoline, battery, tire)!");
+            }
+            return;
+        }
+        
+        // Check car escape (in garage)
+        if (inGarage && carHealth >= 100 && player.hasGarageKey && 
+            Math.hypot(width/2 - player.x, height/2 - player.y) < 120) {
+            carEscape();
             return;
         }
         
@@ -1733,16 +1799,24 @@ actionBtn.addEventListener('touchstart', function(e) {
             for (let item of garageItems) {
                 if (!item.collected && Math.hypot(item.x - player.x, item.y - player.y) < 50) {
                     item.collected = true;
-                    addToInventory({type: item.type});
+                    addToInventory({type: item.type, name: item.type.charAt(0).toUpperCase() + item.type.slice(1)});
                     showAlert(`🎉 Found ${item.type.toUpperCase()}!`);
                     return;
                 }
             }
         }
+        
+        // Exit garage
+        if (inGarage && Math.hypot(100 - player.x, height/2 - player.y) < 80) {
+            inGarage = false;
+            document.getElementById('carHealthBar').style.display = 'none';
+            showAlert("Left garage");
+            return;
+        }
     }
 }, { passive: false });
 
-// Flashlight Button - FIXED TO WORK PROPERLY
+// Flashlight Button
 document.getElementById('flashlightBtn').addEventListener('touchstart', function(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -1842,7 +1916,6 @@ function drawPlayer() {
         // Body with walking animation
         const bodyWidth = size;
         const bodyHeight = size * 1.8;
-        const legOffset = frame === 1 || frame === 3 ? 2 : 0;
         
         // Main body
         ctx.fillRect(-bodyWidth/2, -bodyHeight/2, bodyWidth, bodyHeight);
@@ -1921,7 +1994,7 @@ function drawPlayer() {
 function initFloor(f) {
     floor = f;
     ghosts = [];
-    puzzle = null;
+    puzzles = [];
     stairsUp = null;
     stairsDown = null;
     elevator = null;
@@ -1929,9 +2002,24 @@ function initFloor(f) {
     hidingSpots = [];
     bullets = [];
     darkMode = (f === 1);
-    inGarage = (f === 11);
-    inHelicopterArea = false;
-    monster = null;
+    
+    if (f === 11) {
+        // Roof level - helicopter escape
+        inHelicopterArea = true;
+        monster = {
+            x: width/2,
+            y: height/3,
+            hp: 1000,
+            size: 80,
+            speed: 1.0,
+            floatOffset: Math.random() * Math.PI * 2
+        };
+        helicopter.active = false;
+    } else {
+        inHelicopterArea = false;
+        monster = null;
+        helicopter.active = false;
+    }
     
     // Update darkness and torch
     document.getElementById('darkness').style.opacity = darkMode ? 0.95 : 0;
@@ -1953,15 +2041,26 @@ function initFloor(f) {
         document.getElementById('torch-beam').style.opacity = 0;
     }
     
-    // Special floor 11 (GARAGE)
-    if (f === 11) {
-        document.getElementById('carHealthBar').style.display = 'block';
-        carHealth = 30; // Start with damaged car
-        updateCarHealth();
-        // Set player position in garage
-        player.x = width/2;
-        player.y = height - 100;
-        return;
+    // Create 2 puzzles per floor (total 20)
+    const puzzleIndex = (f-1) * 2;
+    if (puzzleIndex < puzzleRewards.length) {
+        // First puzzle of the floor
+        puzzles.push({
+            x: width * 0.3,
+            y: height * 0.4,
+            solved: false,
+            reward: puzzleRewards[puzzleIndex]
+        });
+        
+        // Second puzzle of the floor
+        if (puzzleIndex + 1 < puzzleRewards.length) {
+            puzzles.push({
+                x: width * 0.7,
+                y: height * 0.4,
+                solved: false,
+                reward: puzzleRewards[puzzleIndex + 1]
+            });
+        }
     }
     
     // Ghost settings based on difficulty
@@ -1992,39 +2091,21 @@ function initFloor(f) {
             break;
     }
     
-    // Create ghosts
-    for (let i = 0; i < ghostCount; i++) {
-        ghosts.push({
-            x: 100 + Math.random()*(width-200),
-            y: 100 + Math.random()*(height-200),
-            speed: ghostSpeed + Math.random()*0.5,
-            damage: ghostDamage,
-            size: 30,
-            wandering: false,
-            wanderTargetX: 0,
-            wanderTargetY: 0,
-            floatOffset: Math.random() * Math.PI * 2
-        });
-    }
-    
-    // Puzzle - check which reward to give based on puzzles solved
-    const rewardIndex = puzzlesSolved % puzzleRewards.length;
-    const reward = puzzleRewards[rewardIndex];
-    
-    puzzle = {
-        x: width/2,
-        y: height/2,
-        solved: false,
-        rewardType: reward.type,
-        rewardAmount: reward.amount || 1
-    };
-    
-    // Special rooms for floor 10 (stairs to floor 11 - GARAGE)
-    if (f === 10) {
-        // Floor 10 has the stairs to floor 11 (GARAGE)
-        stairsUp = {x: width-70, y: height/2, to: 11};
-        // Also has garage key puzzle
-        puzzle.rewardType = 'garagekey';
+    // Create ghosts (not on roof)
+    if (f !== 11) {
+        for (let i = 0; i < ghostCount; i++) {
+            ghosts.push({
+                x: 100 + Math.random()*(width-200),
+                y: 100 + Math.random()*(height-200),
+                speed: ghostSpeed + Math.random()*0.5,
+                damage: ghostDamage,
+                size: 30,
+                wandering: false,
+                wanderTargetX: 0,
+                wanderTargetY: 0,
+                floatOffset: Math.random() * Math.PI * 2
+            });
+        }
     }
     
     // Elevator and stairs
@@ -2032,29 +2113,14 @@ function initFloor(f) {
     if (f > 1) stairsDown = {x: 70, y: height/2, to: f-1};
     if (f < 10) stairsUp = {x: width-70, y: height/2, to: f+1};
     
-    if (f === 10) {
-        // Garage door on floor 10 (needs 5 keys)
-        exitDoor = {x: width/2, y: 90};
-    }
-    
-    // Hiding spots
-    hidingSpots = [
-        {x: 70, y: 90},
-        {x: 70, y: height-90},
-        {x: width-70, y: 90},
-        {x: width-70, y: height-90}
-    ];
-    
-    // Special monster for helicopter escape (on roof/floor 12)
-    if (f === 12 && !player.hasHelicopterKey) {
-        monster = {
-            x: width/2,
-            y: height/3,
-            hp: 1000,
-            size: 80,
-            speed: 1.0,
-            floatOffset: Math.random() * Math.PI * 2
-        };
+    // Hiding spots (not on roof or in special areas)
+    if (f !== 11 && !inGarage) {
+        hidingSpots = [
+            {x: 70, y: 90},
+            {x: 70, y: height-90},
+            {x: width-70, y: 90},
+            {x: width-70, y: height-90}
+        ];
     }
     
     updateFloorIndicator();
@@ -2064,7 +2130,7 @@ function initFloor(f) {
 function updateUI() {
     document.getElementById('healthFill').style.width = player.hp + '%';
     document.getElementById('healthText').textContent = 
-        `HP: ${Math.floor(player.hp)} | KEYS: ${player.keys}/5 | BULLETS: ${player.bullets} | PARTS: ${player.carParts}`;
+        `HP: ${Math.floor(player.hp)} | BULLETS: ${player.bullets} | PUZZLES: ${puzzlesSolved}/20`;
 }
 
 function updateBatteryBar() {
@@ -2078,6 +2144,8 @@ function updateCarHealth() {
 
 function updateFloorIndicator() {
     if (floor === 11) {
+        document.getElementById('floorIndicator').textContent = `ROOF`;
+    } else if (inGarage) {
         document.getElementById('floorIndicator').textContent = `GARAGE`;
     } else {
         document.getElementById('floorIndicator').textContent = `FLOOR: ${floor}`;
@@ -2095,45 +2163,51 @@ function gameLoop() {
         const deltaTime = currentTime - lastTime;
         lastTime = currentTime;
         
-        // Clear canvas with different background for garage
-        if (floor === 11) {
+        // Clear canvas
+        if (inGarage) {
             // Garage background
             ctx.fillStyle = '#1a1a1a';
             ctx.fillRect(0, 0, width, height);
             
-            // Draw garage floor
+            // Draw garage details
             ctx.fillStyle = '#333';
-            ctx.fillRect(0, height - 50, width, 50);
+            // Floor
+            for (let i = 0; i < 10; i++) {
+                ctx.fillRect(0, height - 50 - i*2, width, 1);
+            }
             
-            // Draw garage walls
+            // Walls
             ctx.fillStyle = '#222';
             ctx.fillRect(0, 0, width, 50);
             ctx.fillRect(0, 0, 50, height);
             ctx.fillRect(width-50, 0, 50, height);
             
-            // Draw garage details (shelves, tools, etc)
+            // Shelves
             ctx.fillStyle = '#555';
-            // Left wall shelves
-            for (let i = 0; i < 3; i++) {
-                ctx.fillRect(60, 100 + i*80, 30, 60);
+            for (let i = 0; i < 4; i++) {
+                ctx.fillRect(60, 80 + i*70, 40, 50);
+                ctx.fillRect(width - 100, 80 + i*70, 40, 50);
             }
-            // Right wall shelves
-            for (let i = 0; i < 3; i++) {
-                ctx.fillRect(width - 90, 100 + i*80, 30, 60);
-            }
-            // Garage door at top
-            ctx.fillStyle = '#444';
-            ctx.fillRect(width/2 - 150, 30, 300, 40);
             
-            // Draw garage door details
-            ctx.strokeStyle = '#666';
-            ctx.lineWidth = 2;
-            for (let i = 0; i < 6; i++) {
-                ctx.beginPath();
-                ctx.moveTo(width/2 - 140 + i*50, 30);
-                ctx.lineTo(width/2 - 140 + i*50, 70);
-                ctx.stroke();
+        } else if (floor === 11) {
+            // Roof background
+            ctx.fillStyle = '#0a1a2a';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Stars
+            ctx.fillStyle = '#fff';
+            for (let i = 0; i < 50; i++) {
+                const x = (i * 37) % width;
+                const y = (i * 23) % height;
+                ctx.fillRect(x, y, 1, 1);
             }
+            
+            // Roof edge
+            ctx.fillStyle = '#333';
+            ctx.fillRect(0, 0, width, 30);
+            ctx.fillRect(0, height-30, width, 30);
+            ctx.fillRect(0, 0, 30, height);
+            ctx.fillRect(width-30, 0, 30, height);
             
         } else {
             // Regular floor background
@@ -2202,7 +2276,7 @@ function gameLoop() {
             }
         }
         
-        // Torch effect - FIXED TO WORK PROPERLY
+        // Torch effect
         const torch = document.getElementById('torch');
         const torchBeam = document.getElementById('torch-beam');
         
@@ -2226,7 +2300,7 @@ function gameLoop() {
             if (torchOn && battery > 0) {
                 torch.style.opacity = 1;
                 torchBeam.style.opacity = 0.7;
-                battery -= 0.02; // Reduced battery drain
+                battery -= 0.02;
                 if (battery <= 0) {
                     battery = 0;
                     torchOn = false;
@@ -2250,8 +2324,8 @@ function gameLoop() {
         // Draw player using new animation function
         drawPlayer();
         
-        // Check if player is near a hiding spot (not in garage)
-        if (floor !== 11) {
+        // Check if player is near a hiding spot (not in special areas)
+        if (!inGarage && floor !== 11) {
             nearHidingSpot = false;
             hidingSpots.forEach(spot => {
                 const dist = Math.hypot(spot.x - player.x, spot.y - player.y);
@@ -2263,8 +2337,8 @@ function gameLoop() {
             nearHidingSpot = false;
         }
         
-        // Update and draw ghosts (not in garage)
-        if (floor !== 11) {
+        // Update and draw ghosts (not in special areas)
+        if (!inGarage && floor !== 11) {
             const time = currentTime * 0.001;
             for (const g of ghosts) {
                 // Ghost floating animation
@@ -2357,8 +2431,8 @@ function gameLoop() {
             }
         }
         
-        // Draw hiding spots (not in garage)
-        if (floor !== 11) {
+        // Draw hiding spots (not in special areas)
+        if (!inGarage && floor !== 11) {
             hidingSpots.forEach(s => {
                 const isCurrentHidingSpot = player.hidingSpot && s.x === player.hidingSpot.x && s.y === player.hidingSpot.y;
                 ctx.fillStyle = isCurrentHidingSpot ? '#003300' : '#222';
@@ -2377,39 +2451,44 @@ function gameLoop() {
             });
         }
         
-        // Draw puzzle (not in garage)
-        if (puzzle && floor !== 11) {
-            const color = puzzle.solved ? '#0f0' : '#ff0';
-            ctx.fillStyle = color;
-            ctx.fillRect(puzzle.x - 40, puzzle.y - 40, 80, 80);
-            ctx.fillStyle = '#000';
-            ctx.fillRect(puzzle.x - 28, puzzle.y - 28, 56, 56);
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 16px "Courier New"';
-            ctx.textAlign = 'center';
-            
-            let rewardText = "";
-            if (puzzle.rewardType === 'key') rewardText = "KEY";
-            else if (puzzle.rewardType === 'carpart') rewardText = "PART";
-            else if (puzzle.rewardType === 'helicopterkey') rewardText = "H-KEY";
-            else if (puzzle.rewardType === 'oil') rewardText = "OIL";
-            else if (puzzle.rewardType === 'tape') rewardText = "TAPE";
-            else if (puzzle.rewardType === 'garagekey') rewardText = "G-KEY";
-            else if (puzzle.rewardType === 'battery') rewardText = "BATT";
-            else if (puzzle.rewardType === 'bullets') rewardText = "AMMO";
-            else if (puzzle.rewardType === 'health') rewardText = "HEAL";
-            
-            ctx.fillText(puzzle.solved ? "SOLVED" : rewardText, puzzle.x, puzzle.y + 5);
-            
-            // Glow effect
-            ctx.shadowColor = color;
-            ctx.shadowBlur = 15;
-            ctx.fillRect(puzzle.x - 40, puzzle.y - 40, 80, 80);
-            ctx.shadowBlur = 0;
-        }
+        // Draw puzzles
+        puzzles.forEach(p => {
+            if (!p.solved) {
+                const color = '#ff0';
+                ctx.fillStyle = color;
+                ctx.fillRect(p.x - 40, p.y - 40, 80, 80);
+                ctx.fillStyle = '#000';
+                ctx.fillRect(p.x - 28, p.y - 28, 56, 56);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 16px "Courier New"';
+                ctx.textAlign = 'center';
+                
+                let rewardText = "?";
+                if (p.reward.type === 'key') rewardText = "KEY";
+                else if (p.reward.type === 'carpart') rewardText = "PART";
+                else if (p.reward.type === 'helicopterkey') rewardText = "H-KEY";
+                else if (p.reward.type === 'oil') rewardText = "OIL";
+                else if (p.reward.type === 'tape') rewardText = "TAPE";
+                else if (p.reward.type === 'garagekey') rewardText = "G-KEY";
+                else if (p.reward.type === 'battery') rewardText = "BATT";
+                else if (p.reward.type === 'bullets') rewardText = "AMMO";
+                else if (p.reward.type === 'health') rewardText = "HEAL";
+                else if (p.reward.type === 'toolbox') rewardText = "TOOL";
+                else if (p.reward.type === 'rope') rewardText = "ROPE";
+                else if (p.reward.type === 'maindoorkey') rewardText = "M-KEY";
+                
+                ctx.fillText(rewardText, p.x, p.y + 5);
+                
+                // Glow effect
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 15;
+                ctx.fillRect(p.x - 40, p.y - 40, 80, 80);
+                ctx.shadowBlur = 0;
+            }
+        });
         
-        // Draw elevator (not in garage)
-        if (elevator && floor !== 11) {
+        // Draw elevator (not in garage or roof)
+        if (elevator && !inGarage && floor !== 11) {
             ctx.fillStyle = '#333';
             ctx.fillRect(elevator.x - 50, elevator.y - 50, 100, 100);
             ctx.fillStyle = '#0ff';
@@ -2418,8 +2497,8 @@ function gameLoop() {
             ctx.fillText("LIFT", elevator.x, elevator.y - 12);
         }
         
-        // Draw stairs (not in garage)
-        if (stairsDown && floor !== 11) {
+        // Draw stairs (not in garage or roof)
+        if (stairsDown && !inGarage && floor !== 11) {
             ctx.fillStyle = '#444';
             ctx.fillRect(stairsDown.x - 35, stairsDown.y - 40, 70, 80);
             ctx.fillStyle = '#fff';
@@ -2428,7 +2507,7 @@ function gameLoop() {
             ctx.fillText("DN", stairsDown.x, stairsDown.y + 6);
         }
         
-        if (stairsUp && floor !== 11) {
+        if (stairsUp && !inGarage && floor !== 11) {
             ctx.fillStyle = '#444';
             ctx.fillRect(stairsUp.x - 35, stairsUp.y - 40, 70, 80);
             ctx.fillStyle = '#fff';
@@ -2437,172 +2516,216 @@ function gameLoop() {
             ctx.fillText("UP", stairsUp.x, stairsUp.y + 6);
         }
         
-        // Draw exit door
-        if (exitDoor) {
-            if (floor === 10) {
-                // Floor 10 GARAGE DOOR (needs 5 keys)
-                if (player.keys >= 5) {
-                    ctx.fillStyle = '#800';
-                    ctx.fillRect(exitDoor.x - 100, exitDoor.y - 50, 200, 100);
-                    ctx.fillStyle = '#000';
-                    ctx.fillRect(exitDoor.x - 80, exitDoor.y - 30, 160, 60);
-                    
-                    // Animated effect
-                    const pulseTime = currentTime * 0.005;
-                    for (let i = 0; i < 5; i++) {
-                        const a = pulseTime + i * 0.3;
-                        ctx.strokeStyle = '#f00';
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        ctx.arc(exitDoor.x, exitDoor.y, 30 + i * 10, a, a + 2.0);
-                        ctx.stroke();
-                    }
-                    
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 24px "Courier New"';
-                    ctx.textAlign = 'center';
-                    ctx.fillText("GARAGE", exitDoor.x, exitDoor.y + 8);
-                    
-                    // Draw key slots
-                    ctx.fillStyle = '#ff0';
-                    for (let i = 0; i < 5; i++) {
-                        if (i < player.keys) {
-                            ctx.fillRect(exitDoor.x - 90 + i*35, exitDoor.y + 20, 20, 10);
-                        } else {
-                            ctx.strokeStyle = '#ff0';
-                            ctx.strokeRect(exitDoor.x - 90 + i*35, exitDoor.y + 20, 20, 10);
-                        }
-                    }
-                } else {
-                    ctx.fillStyle = '#400';
-                    ctx.fillRect(exitDoor.x - 100, exitDoor.y - 50, 200, 100);
-                    ctx.fillStyle = '#822';
-                    ctx.font = 'bold 20px "Courier New"';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(`NEED ${5 - player.keys} MORE KEYS`, exitDoor.x, exitDoor.y + 8);
-                }
-            } else if (floor === 11) {
-                // GARAGE - Draw car in center
-                const carX = width/2;
-                const carY = height/2 - 30;
-                
-                // Car body
-                ctx.fillStyle = '#800';
-                ctx.fillRect(carX - 120, carY - 60, 240, 120);
-                
-                // Car windows
-                ctx.fillStyle = '#0af';
-                ctx.fillRect(carX - 100, carY - 40, 80, 50);
-                ctx.fillRect(carX + 20, carY - 40, 80, 50);
-                
-                // Car details
-                ctx.fillStyle = '#000';
-                // Headlights
-                ctx.fillRect(carX - 110, carY - 30, 20, 15);
-                ctx.fillRect(carX + 90, carY - 30, 20, 15);
-                // Wheels
-                ctx.fillStyle = '#222';
-                ctx.fillRect(carX - 100, carY + 40, 40, 20);
-                ctx.fillRect(carX + 60, carY + 40, 40, 20);
-                
-                // Car status
-                if (carHealth >= 100 && player.hasGarageKey) {
-                    ctx.fillStyle = '#0f0';
-                    ctx.font = 'bold 26px "Courier New"';
-                    ctx.textAlign = 'center';
-                    ctx.fillText("READY TO ESCAPE!", carX, carY - 90);
-                } else if (carHealth < 100) {
-                    ctx.fillStyle = '#ff0';
-                    ctx.font = 'bold 22px "Courier New"';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(`REPAIR CAR: ${carHealth}%`, carX, carY - 90);
-                }
-                
-                // Draw garage items
-                garageItems.forEach(item => {
-                    if (!item.collected) {
-                        let color = '#0f0';
-                        let text = '';
-                        
-                        switch(item.type) {
-                            case 'toolbox': color = '#ff0'; text = '🧰'; break;
-                            case 'gasoline': color = '#f80'; text = '⛽'; break;
-                            case 'battery': color = '#0ff'; text = '🔋'; break;
-                            case 'tire': color = '#888'; text = '🛞'; break;
-                        }
-                        
-                        ctx.fillStyle = color;
-                        ctx.font = 'bold 32px Arial';
-                        ctx.textAlign = 'center';
-                        ctx.fillText(text, item.x, item.y);
-                        
-                        // Glow effect
-                        ctx.shadowColor = color;
-                        ctx.shadowBlur = 15;
-                        ctx.fillText(text, item.x, item.y);
-                        ctx.shadowBlur = 0;
-                    }
-                });
+        // Draw main door (floor 1)
+        if (floor === 1 && !inGarage) {
+            ctx.fillStyle = mainDoor.locked ? '#800' : '#080';
+            ctx.fillRect(mainDoor.x - 80, mainDoor.y - 60, 160, 120);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(mainDoor.x - 60, mainDoor.y - 40, 120, 80);
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 24px "Courier New"';
+            ctx.textAlign = 'center';
+            if (mainDoor.locked) {
+                ctx.fillText("MAIN DOOR", mainDoor.x, mainDoor.y + 10);
+                ctx.font = '16px "Courier New"';
+                ctx.fillText("LOCKED", mainDoor.x, mainDoor.y + 35);
+            } else {
+                ctx.fillText("EXIT", mainDoor.x, mainDoor.y + 10);
             }
         }
         
-        // Draw monster for helicopter escape (on roof/floor 12)
-        if (monster && monster.hp > 0) {
-            // Monster floating animation
-            monster.floatOffset += 0.01;
-            const monsterFloatY = Math.sin(monster.floatOffset) * 5;
-            
-            ctx.save();
-            ctx.translate(monster.x, monster.y + monsterFloatY);
-            
-            // Monster body with pulsing effect
-            const monsterPulse = Math.sin(currentTime * 0.001 * 1.5) * 0.1 + 0.9;
-            ctx.fillStyle = '#400';
+        // Draw rope (floor 10)
+        if (floor === 10 && !rope.collected) {
+            ctx.fillStyle = '#8B4513';
+            // Draw rope coil
             ctx.beginPath();
-            ctx.arc(0, 0, monster.size * monsterPulse, 0, Math.PI*2);
+            ctx.arc(rope.x, rope.y, 30, 0, Math.PI * 2);
             ctx.fill();
             
-            // Monster details
-            ctx.fillStyle = '#800';
-            ctx.beginPath();
-            ctx.arc(-25, -15, 15 * monsterPulse, 0, Math.PI*2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(25, -15, 15 * monsterPulse, 0, Math.PI*2);
-            ctx.fill();
-            
-            // Teeth
             ctx.fillStyle = '#fff';
-            for (let i = 0; i < 8; i++) {
-                ctx.fillRect(-40 + i*10, 20, 5, 15);
+            ctx.font = 'bold 32px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText("🪢", rope.x, rope.y + 10);
+            
+            // Label
+            ctx.font = '14px "Courier New"';
+            ctx.fillText("ROPE", rope.x, rope.y + 40);
+        }
+        
+        // Draw garage entrance (floor 1)
+        if (floor === 1 && !inGarage) {
+            ctx.fillStyle = '#444';
+            ctx.fillRect(width - 120, height/2 - 50, 80, 100);
+            ctx.fillStyle = '#666';
+            // Garage door lines
+            for (let i = 0; i < 4; i++) {
+                ctx.fillRect(width - 115 + i*18, height/2 - 40, 2, 80);
             }
             
-            // HP bar
-            ctx.fillStyle = '#300';
-            ctx.fillRect(-50, -100, 100, 10);
-            ctx.fillStyle = '#f00';
-            ctx.fillRect(-50, -100, monster.hp/10, 10);
+            ctx.fillStyle = '#ff0';
+            ctx.font = 'bold 18px "Courier New"';
+            ctx.textAlign = 'center';
+            ctx.fillText("GARAGE", width - 80, height/2 - 60);
+        }
+        
+        // Draw garage contents
+        if (inGarage) {
+            // Draw car
+            const carX = width/2;
+            const carY = height/2;
             
-            ctx.restore();
+            // Car body
+            ctx.fillStyle = '#800';
+            ctx.fillRect(carX - 100, carY - 60, 200, 120);
             
-            // Monster chases player
-            if (!player.hidden) {
-                const dx = player.x - monster.x;
-                const dy = player.y - monster.y;
-                const dist = Math.hypot(dx, dy);
+            // Car windows
+            ctx.fillStyle = '#0af';
+            ctx.fillRect(carX - 80, carY - 40, 70, 50);
+            ctx.fillRect(carX + 10, carY - 40, 70, 50);
+            
+            // Car details
+            ctx.fillStyle = '#000';
+            // Headlights
+            ctx.fillRect(carX - 95, carY - 30, 15, 20);
+            ctx.fillRect(carX + 80, carY - 30, 15, 20);
+            // Wheels
+            ctx.fillStyle = '#222';
+            ctx.fillRect(carX - 85, carY + 40, 40, 20);
+            ctx.fillRect(carX + 45, carY + 40, 40, 20);
+            
+            // Car status
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 20px "Courier New"';
+            ctx.textAlign = 'center';
+            if (carHealth >= 100) {
+                ctx.fillStyle = '#0f0';
+                ctx.fillText("READY TO ESCAPE!", carX, carY - 90);
+            } else {
+                ctx.fillStyle = '#ff0';
+                ctx.fillText(`REPAIR: ${carHealth}%`, carX, carY - 90);
+            }
+            
+            // Draw garage items
+            garageItems.forEach(item => {
+                if (!item.collected) {
+                    let color = '#0f0';
+                    let text = '';
+                    
+                    switch(item.type) {
+                        case 'toolbox': color = '#ff0'; text = '🧰'; break;
+                        case 'gasoline': color = '#f80'; text = '⛽'; break;
+                        case 'carbattery': color = '#0ff'; text = '🔋'; break;
+                        case 'tire': color = '#888'; text = '🛞'; break;
+                    }
+                    
+                    ctx.fillStyle = color;
+                    ctx.font = 'bold 32px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(text, item.x, item.y);
+                    
+                    // Label
+                    ctx.font = '14px "Courier New"';
+                    ctx.fillText(item.type.toUpperCase(), item.x, item.y + 40);
+                }
+            });
+            
+            // Draw exit from garage
+            ctx.fillStyle = '#666';
+            ctx.fillRect(80, height/2 - 40, 60, 80);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 16px "Courier New"';
+            ctx.textAlign = 'center';
+            ctx.fillText("EXIT", 110, height/2);
+        }
+        
+        // Draw monster and helicopter on roof
+        if (floor === 11) {
+            // Draw helicopter
+            ctx.fillStyle = helicopter.active ? '#0a0' : '#666';
+            ctx.fillRect(helicopter.x - 60, helicopter.y - 30, 120, 60);
+            ctx.fillStyle = '#0af';
+            ctx.fillRect(helicopter.x - 40, helicopter.y - 20, 80, 40);
+            
+            // Helicopter blades
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(helicopter.x - 70, helicopter.y);
+            ctx.lineTo(helicopter.x + 70, helicopter.y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(helicopter.x, helicopter.y - 60);
+            ctx.lineTo(helicopter.x, helicopter.y + 60);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 20px "Courier New"';
+            ctx.textAlign = 'center';
+            if (helicopter.active) {
+                ctx.fillText("HELICOPTER", helicopter.x, helicopter.y - 80);
+            } else {
+                ctx.fillText("DEFEAT MONSTER", helicopter.x, helicopter.y - 80);
+            }
+            
+            // Draw monster
+            if (monster && monster.hp > 0) {
+                // Monster floating animation
+                monster.floatOffset += 0.01;
+                const monsterFloatY = Math.sin(monster.floatOffset) * 5;
                 
-                if (dist > 50) {
-                    monster.x += dx/dist * monster.speed;
-                    monster.y += dy/dist * monster.speed;
+                ctx.save();
+                ctx.translate(monster.x, monster.y + monsterFloatY);
+                
+                // Monster body with pulsing effect
+                const monsterPulse = Math.sin(currentTime * 0.001 * 1.5) * 0.1 + 0.9;
+                ctx.fillStyle = '#400';
+                ctx.beginPath();
+                ctx.arc(0, 0, monster.size * monsterPulse, 0, Math.PI*2);
+                ctx.fill();
+                
+                // Monster details
+                ctx.fillStyle = '#800';
+                ctx.beginPath();
+                ctx.arc(-25, -15, 15 * monsterPulse, 0, Math.PI*2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(25, -15, 15 * monsterPulse, 0, Math.PI*2);
+                ctx.fill();
+                
+                // Teeth
+                ctx.fillStyle = '#fff';
+                for (let i = 0; i < 8; i++) {
+                    ctx.fillRect(-40 + i*10, 20, 5, 15);
                 }
                 
-                // Monster damage
-                if (dist < player.size + monster.size) {
-                    player.hp -= 5;
-                    updateUI();
+                // HP bar
+                ctx.fillStyle = '#300';
+                ctx.fillRect(-50, -100, 100, 10);
+                ctx.fillStyle = '#f00';
+                ctx.fillRect(-50, -100, monster.hp/10, 10);
+                
+                ctx.restore();
+                
+                // Monster chases player
+                if (!player.hidden) {
+                    const dx = player.x - monster.x;
+                    const dy = player.y - monster.y;
+                    const dist = Math.hypot(dx, dy);
                     
-                    if (player.hp <= 0) {
-                        gameOver();
+                    if (dist > 50) {
+                        monster.x += dx/dist * monster.speed;
+                        monster.y += dy/dist * monster.speed;
+                    }
+                    
+                    // Monster damage
+                    if (dist < player.size + monster.size) {
+                        player.hp -= 5;
+                        updateUI();
+                        
+                        if (player.hp <= 0) {
+                            gameOver();
+                        }
                     }
                 }
             }
@@ -2612,8 +2735,53 @@ function gameLoop() {
         const prompt = document.getElementById('prompt');
         prompt.style.display = 'none';
         
-        if (floor !== 11) {
+        if (inGarage) {
+            // Garage prompts
+            const carX = width/2;
+            const carY = height/2;
+            if (Math.hypot(carX - player.x, carY - player.y) < 120) {
+                if (carHealth >= 100 && player.hasGarageKey) {
+                    prompt.textContent = "A → ESCAPE BY CAR";
+                    prompt.style.display = 'block';
+                } else if (carHealth < 100) {
+                    prompt.textContent = "A → REPAIR CAR (Use items from inventory)";
+                    prompt.style.display = 'block';
+                }
+            }
+            
+            // Check garage items
+            for (let item of garageItems) {
+                if (!item.collected && Math.hypot(item.x - player.x, item.y - player.y) < 40) {
+                    prompt.textContent = "A → PICK UP " + item.type.toUpperCase();
+                    prompt.style.display = 'block';
+                    break;
+                }
+            }
+            
+            // Exit garage
+            if (Math.hypot(110 - player.x, height/2 - player.y) < 50) {
+                prompt.textContent = "A → EXIT GARAGE";
+                prompt.style.display = 'block';
+            }
+            
+        } else if (floor === 11) {
+            // Roof prompts
+            if (helicopter.active && Math.hypot(helicopter.x - player.x, helicopter.y - player.y) < 100) {
+                prompt.textContent = "A → ESCAPE BY HELICOPTER";
+                prompt.style.display = 'block';
+            }
+            
+        } else {
             // Regular floor prompts
+            // Check puzzles
+            for (let p of puzzles) {
+                if (!p.solved && Math.hypot(p.x - player.x, p.y - player.y) < 70) {
+                    prompt.textContent = "A → SOLVE PUZZLE";
+                    prompt.style.display = 'block';
+                    break;
+                }
+            }
+            
             if (elevator && Math.hypot(elevator.x - player.x, elevator.y - player.y) < 80) {
                 prompt.textContent = "A → LIFT";
                 prompt.style.display = 'block';
@@ -2629,37 +2797,18 @@ function gameLoop() {
             } else if (player.hidden) {
                 prompt.textContent = "A → COME OUT";
                 prompt.style.display = 'block';
-            } else if (puzzle && !puzzle.solved && Math.hypot(puzzle.x - player.x, puzzle.y - player.y) < 65) {
-                prompt.textContent = "A → PUZZLE";
+            } else if (floor === 1 && Math.hypot(mainDoor.x - player.x, mainDoor.y - player.y) < 100) {
+                prompt.textContent = "A → MAIN DOOR";
                 prompt.style.display = 'block';
-            } else if (exitDoor && Math.hypot(exitDoor.x - player.x, exitDoor.y - player.y) < 90) {
-                if (floor === 10 && player.keys >= 5) {
-                    prompt.textContent = "A → ENTER GARAGE";
-                    prompt.style.display = 'block';
-                }
-            }
-        } else {
-            // Garage prompts
-            // Check car interaction
-            const carX = width/2;
-            const carY = height/2 - 30;
-            if (Math.hypot(carX - player.x, carY - player.y) < 120) {
-                if (carHealth >= 100 && player.hasGarageKey) {
-                    prompt.textContent = "A → ESCAPE BY CAR";
-                    prompt.style.display = 'block';
-                } else if (carHealth < 100) {
-                    prompt.textContent = "A → REPAIR CAR";
-                    prompt.style.display = 'block';
-                }
-            }
-            
-            // Check garage items
-            for (let item of garageItems) {
-                if (!item.collected && Math.hypot(item.x - player.x, item.y - player.y) < 40) {
-                    prompt.textContent = "A → PICK UP";
-                    prompt.style.display = 'block';
-                    break;
-                }
+            } else if (floor === 1 && Math.hypot(width - 80 - player.x, height/2 - player.y) < 60) {
+                prompt.textContent = "A → ENTER GARAGE";
+                prompt.style.display = 'block';
+            } else if (floor === 10 && !rope.collected && Math.hypot(rope.x - player.x, rope.y - player.y) < 60) {
+                prompt.textContent = "A → PICK UP ROPE";
+                prompt.style.display = 'block';
+            } else if (floor === 10 && player.hasRope && Math.hypot(width/2 - player.x, 100 - player.y) < 80) {
+                prompt.textContent = "A → USE ROPE TO ROOF";
+                prompt.style.display = 'block';
             }
         }
         
@@ -2676,7 +2825,10 @@ function gameLoop() {
 // ============================================
 // MODAL FUNCTIONS
 // ============================================
-function openPuzzle() {
+let currentPuzzle = null;
+
+function openPuzzle(puzzle) {
+    currentPuzzle = puzzle;
     let questions = [];
     
     // Different puzzle difficulties based on game mode
@@ -2690,7 +2842,9 @@ function openPuzzle() {
                 {q: "8÷2=?", a: "4"},
                 {q: "7+8=?", a: "15"},
                 {q: "12-5=?", a: "7"},
-                {q: "3×4=?", a: "12"}
+                {q: "3×4=?", a: "12"},
+                {q: "10-7=?", a: "3"},
+                {q: "6×2=?", a: "12"}
             ];
             break;
             
@@ -2703,7 +2857,9 @@ function openPuzzle() {
                 {q: "8×8=?", a: "64"},
                 {q: "3×7=?", a: "21"},
                 {q: "14+9=?", a: "23"},
-                {q: "36÷6=?", a: "6"}
+                {q: "36÷6=?", a: "6"},
+                {q: "17-8=?", a: "9"},
+                {q: "5×6=?", a: "30"}
             ];
             break;
             
@@ -2716,7 +2872,9 @@ function openPuzzle() {
                 {q: "9×12=?", a: "108"},
                 {q: "81÷9=?", a: "9"},
                 {q: "34+47=?", a: "81"},
-                {q: "72-36=?", a: "36"}
+                {q: "72-36=?", a: "36"},
+                {q: "15×8=?", a: "120"},
+                {q: "96÷8=?", a: "12"}
             ];
             break;
             
@@ -2729,7 +2887,9 @@ function openPuzzle() {
                 {q: "15×16=?", a: "240"},
                 {q: "196÷14=?", a: "14"},
                 {q: "123+89=?", a: "212"},
-                {q: "200-123=?", a: "77"}
+                {q: "200-123=?", a: "77"},
+                {q: "18×14=?", a: "252"},
+                {q: "225÷15=?", a: "15"}
             ];
             break;
     }
@@ -2744,53 +2904,74 @@ function openPuzzle() {
 
 function closePuzzle() {
     document.getElementById('puzzleModal').style.display = 'none';
+    currentPuzzle = null;
 }
 
 document.getElementById('submitPuzzle').onclick = () => {
     const answer = document.getElementById('puzzleAnswer').value.trim();
     
-    if (answer === window.currentAnswer) {
-        puzzle.solved = true;
+    if (answer === window.currentAnswer && currentPuzzle) {
+        currentPuzzle.solved = true;
         puzzlesSolved++;
         closePuzzle();
         
         // Give rewards based on puzzle type
-        if (puzzle.rewardType === 'key') {
+        const reward = currentPuzzle.reward;
+        
+        // Always give health + bullet
+        player.hp = Math.min(100, player.hp + 50);
+        player.bullets += 1;
+        
+        // Give specific reward
+        if (reward.type === 'key') {
             player.keys++;
-            showAlert("🎉 KEY FOUND! (" + player.keys + "/5)");
-        } else if (puzzle.rewardType === 'carpart') {
+            showAlert("🎉 KEY FOUND! +50% HP +1 BULLET");
+        } else if (reward.type === 'carpart') {
             player.carParts++;
-            addToInventory({type: 'carpart'});
-            showAlert("🔧 CAR PART FOUND! (" + player.carParts + "/10)");
-        } else if (puzzle.rewardType === 'helicopterkey') {
+            addToInventory({type: 'carpart', name: reward.name});
+            showAlert("🔧 CAR PART FOUND! +50% HP +1 BULLET");
+        } else if (reward.type === 'helicopterkey') {
             player.hasHelicopterKey = true;
-            addToInventory({type: 'helicopterkey'});
-            showAlert("🚁 HELICOPTER KEY FOUND!");
-        } else if (puzzle.rewardType === 'oil') {
+            addToInventory({type: 'helicopterkey', name: reward.name});
+            showAlert("🚁 HELICOPTER KEY FOUND! +50% HP +1 BULLET");
+        } else if (reward.type === 'oil') {
             player.hasOil = true;
-            addToInventory({type: 'oil'});
-            showAlert("🛢️ OIL FOUND!");
-        } else if (puzzle.rewardType === 'tape') {
+            addToInventory({type: 'oil', name: reward.name});
+            showAlert("🛢️ OIL FOUND! +50% HP +1 BULLET");
+        } else if (reward.type === 'tape') {
             player.hasTape = true;
-            addToInventory({type: 'tape'});
-            showAlert("📼 TAPE FOUND!");
-        } else if (puzzle.rewardType === 'garagekey') {
+            addToInventory({type: 'tape', name: reward.name});
+            showAlert("📼 TAPE FOUND! +50% HP +1 BULLET");
+        } else if (reward.type === 'garagekey') {
             player.hasGarageKey = true;
-            addToInventory({type: 'garagekey'});
-            showAlert("🚗 GARAGE KEY FOUND!");
-        } else if (puzzle.rewardType === 'battery') {
-            battery = Math.min(100, battery + (puzzle.rewardAmount || 50));
-            showAlert("🔋 +" + (puzzle.rewardAmount || 50) + "% BATTERY!");
-            updateBatteryBar();
-        } else if (puzzle.rewardType === 'bullets') {
-            player.bullets += (puzzle.rewardAmount || 10);
-            showAlert("🔫 +" + (puzzle.rewardAmount || 10) + " BULLETS!");
-        } else if (puzzle.rewardType === 'health') {
-            player.hp = Math.min(100, player.hp + (puzzle.rewardAmount || 50));
-            showAlert("❤️ +" + (puzzle.rewardAmount || 50) + "% HEALTH!");
+            addToInventory({type: 'garagekey', name: reward.name});
+            showAlert("🚗 GARAGE KEY FOUND! +50% HP +1 BULLET");
+        } else if (reward.type === 'battery') {
+            battery = Math.min(100, battery + 50);
+            addToInventory({type: 'battery', name: reward.name, amount: 50});
+            showAlert("🔋 BATTERY FOUND! +50% HP +1 BULLET");
+        } else if (reward.type === 'bullets') {
+            player.bullets += 10;
+            addToInventory({type: 'bullets', name: reward.name, amount: 10});
+            showAlert("🔫 AMMO FOUND! +50% HP +1 BULLET");
+        } else if (reward.type === 'health') {
+            player.hp = Math.min(100, player.hp + (reward.amount || 50));
+            addToInventory({type: 'health', name: reward.name, amount: (reward.amount || 50)});
+            showAlert("❤️ HEALTH KIT FOUND! +" + (reward.amount || 50) + "% HP +1 BULLET");
+        } else if (reward.type === 'toolbox') {
+            addToInventory({type: 'toolbox', name: reward.name});
+            showAlert("🧰 TOOLBOX FOUND! +50% HP +1 BULLET");
+        } else if (reward.type === 'rope') {
+            addToInventory({type: 'rope', name: reward.name});
+            showAlert("🪢 ROPE FOUND! +50% HP +1 BULLET");
+        } else if (reward.type === 'maindoorkey') {
+            player.hasMainDoorKey = true;
+            addToInventory({type: 'maindoorkey', name: reward.name});
+            showAlert("🚪 MAIN DOOR KEY FOUND! +50% HP +1 BULLET");
         }
         
         updateUI();
+        updateBatteryBar();
     } else {
         showAlert("❌ WRONG ANSWER!");
     }
@@ -2800,10 +2981,10 @@ function openLift() {
     const container = document.getElementById('floorButtons');
     container.innerHTML = '';
     
-    for (let i = 1; i <= 11; i++) {
+    for (let i = 1; i <= 10; i++) {
         const btn = document.createElement('button');
         btn.className = 'btn';
-        btn.textContent = i === 11 ? 'GARAGE' : 'F' + i;
+        btn.textContent = 'F' + i;
         btn.style.background = i === floor ? '#c00' : '#800';
         btn.style.padding = '6px 4px';
         btn.style.fontSize = i === floor ? '1rem' : '0.9rem';
@@ -2811,13 +2992,6 @@ function openLift() {
             closeLift();
             if (i !== floor) changeFloor(i);
         };
-        
-        // Disable floor 11 (GARAGE) if player doesn't have 5 keys
-        if (i === 11 && player.keys < 5) {
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
-            btn.title = "Need 5 keys to access GARAGE";
-        }
         
         container.appendChild(btn);
     }
@@ -2835,6 +3009,8 @@ function changeFloor(to) {
     ctx.fillRect(0, 0, width, height);
     
     setTimeout(() => {
+        inGarage = false;
+        document.getElementById('carHealthBar').style.display = 'none';
         initFloor(to);
     }, 300);
 }
@@ -2884,8 +3060,27 @@ function carEscape() {
 
 function helicopterEscape() {
     gameRunning = false;
-    document.getElementById('winTitle').textContent = "HELICOPTER ESCAPE SUCCESS!";
-    document.getElementById('winText').textContent = "You escaped by helicopter from the roof!";
+    
+    // Play helicopter sound
+    const heliSound = document.getElementById('helicopterSound');
+    heliSound.currentTime = 0;
+    heliSound.volume = 0.7;
+    heliSound.play().catch(e => console.log("Helicopter sound error"));
+    
+    // Show win screen
+    setTimeout(() => {
+        document.getElementById('winTitle').textContent = "HELICOPTER ESCAPE SUCCESS!";
+        document.getElementById('winText').textContent = "You escaped by helicopter from the roof!";
+        showScreen('winScreen');
+        document.getElementById('bgm').pause();
+    }, 2000);
+}
+
+function mainDoorEscape() {
+    gameRunning = false;
+    
+    document.getElementById('winTitle').textContent = "MAIN DOOR ESCAPE SUCCESS!";
+    document.getElementById('winText').textContent = "You escaped through the main door!";
     showScreen('winScreen');
     document.getElementById('bgm').pause();
 }
@@ -2916,6 +3111,14 @@ window.addEventListener('resize', () => {
         player.x = Math.min(player.x, width - 60);
         player.y = Math.min(player.y, height - 60);
     }
+    
+    // Update positions
+    mainDoor.x = width/2;
+    mainDoor.y = height-100;
+    rope.x = width-100;
+    rope.y = height-150;
+    helicopter.x = width/2;
+    helicopter.y = 100;
     
     // Update garage item positions
     if (garageItems.length > 0) {
@@ -2961,7 +3164,7 @@ document.addEventListener('keydown', function(e) {
 
 // Initialize - Start in fullscreen
 showScreen('startScreen');
-console.log("CURSED APARTMENT - GARAGE Added");
+console.log("CURSED APARTMENT - Complete Game with 3 Escape Routes");
 </script>
 </body>
 </html>
